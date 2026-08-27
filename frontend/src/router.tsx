@@ -3,6 +3,9 @@ import type { ReactNode } from "react"
 import App from "@/App"
 import LoginPage from "@/pages/LoginPage"
 import SignupPage from "@/pages/SignupPage"
+import PricingPage from "@/pages/PricingPage"
+import DashboardHome from "@/pages/DashboardHome"
+import UsagePage from "@/pages/UsagePage"
 import { useAppStore } from "@/store/appStore"
 
 function ProtectedRoute({ children }: { children: ReactNode }) {
@@ -18,7 +21,23 @@ export const router = createBrowserRouter([
     path: "/dashboard",
     element: (
       <ProtectedRoute>
-        <div className="p-8">Dashboard placeholder — Phase 2 builds this out</div>
+        <DashboardHome />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/pricing",
+    element: (
+      <ProtectedRoute>
+        <PricingPage />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/usage",
+    element: (
+      <ProtectedRoute>
+        <UsagePage />
       </ProtectedRoute>
     ),
   },
