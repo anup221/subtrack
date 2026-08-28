@@ -8,12 +8,21 @@ import DashboardHome from "@/pages/DashboardHome"
 import UsagePage from "@/pages/UsagePage"
 import BillingPage from "@/pages/BillingPage"
 import AdminOverview from "@/pages/AdminOverview"
+import OrganizationPage from "@/pages/OrganizationPage"
 import { DashboardLayout } from "@/components/layout/DashboardLayout"
 import { useAppStore } from "@/store/appStore"
 
 function ProtectedRoute({ children }: { children: ReactNode }) {
   const token = useAppStore((s) => s.token)
   if (!token) return <Navigate to="/login" replace />
+  return <DashboardLayout>{children}</DashboardLayout>
+}
+
+function OwnerRoute({ children }: { children: ReactNode }) {
+  const token = useAppStore((s) => s.token)
+  const role = useAppStore((s) => s.role)
+  if (!token) return <Navigate to="/login" replace />
+  if (role !== "OWNER" && role !== "ADMIN") return <Navigate to="/dashboard" replace />
   return <DashboardLayout>{children}</DashboardLayout>
 }
 
@@ -59,6 +68,14 @@ export const router = createBrowserRouter([
       <ProtectedRoute>
         <BillingPage />
       </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/organization",
+    element: (
+      <OwnerRoute>
+        <OrganizationPage />
+      </OwnerRoute>
     ),
   },
   {

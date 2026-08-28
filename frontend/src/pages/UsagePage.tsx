@@ -3,6 +3,7 @@ import { AreaChart, ProgressBar } from "@tremor/react"
 import { getUsageSummary, recordUsage } from "@/lib/api"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { PageHeader } from "@/components/ui/page-header"
 
 export default function UsagePage() {
   const queryClient = useQueryClient()
@@ -27,29 +28,34 @@ export default function UsagePage() {
     ? Math.min(100, Math.round((summary.currentPeriodUsage / summary.maxUsage) * 100))
     : 0
 
-  const chartData = summary?.dailyBreakdown.map((point) => ({
-    date: point.date,
-    "API Calls": point.usage,
-  })) ?? []
+  const chartData =
+    summary?.dailyBreakdown.map((point) => ({
+      date: point.date,
+      "API Calls": point.usage,
+    })) ?? []
 
   return (
-    <div className="space-y-8 max-w-3xl">
-      <div>
-        <h1 className="text-2xl font-semibold">Usage</h1>
-        <p className="text-[#8b8b9c] text-sm mt-1">Track your API usage against your plan's limit.</p>
-      </div>
+    <div className="mx-auto max-w-3xl space-y-8">
+      <PageHeader
+        eyebrow="Metering"
+        title="Usage"
+        description="Live period counter from Redis, with a daily Postgres rollup for the chart."
+      />
 
       <Card className="glow-border space-y-3">
         <p className="text-sm text-[#8b8b9c]">This billing period</p>
-        <p className="text-xl font-semibold">
-          {summary?.currentPeriodUsage.toLocaleString()} / {summary?.maxUsage.toLocaleString()} calls
+        <p className="text-2xl font-semibold">
+          {summary?.currentPeriodUsage.toLocaleString()}{" "}
+          <span className="text-base font-normal text-[#8b8b9c]">
+            / {summary?.maxUsage.toLocaleString()} calls
+          </span>
         </p>
         <ProgressBar value={percentUsed} color={percentUsed >= 90 ? "red" : "violet"} />
         <p className="text-xs text-[#8b8b9c]">{percentUsed}% of plan limit used</p>
       </Card>
 
       <Card>
-        <p className="text-sm text-[#8b8b9c] mb-4">Daily usage (last 30 days)</p>
+        <p className="mb-4 text-sm text-[#8b8b9c]">Daily usage (last 30 days)</p>
         <AreaChart
           data={chartData}
           index="date"
@@ -60,12 +66,16 @@ export default function UsagePage() {
       </Card>
 
       <div className="space-y-2">
-        <Button onClick={() => mutation.mutate(Math.floor(Math.random() * 40) + 10)} disabled={mutation.isPending}>
-          {mutation.isPending ? "Recording..." : "Simulate 10-50 API calls"}
+        <Button
+          onClick={() => mutation.mutate(Math.floor(Math.random() * 40) + 10)}
+          disabled={mutation.isPending}
+        >
+          {mutation.isPending ? "Recording..." : "Simulate 10–50 API calls"}
         </Button>
         {mutation.isError && (
           <p className="text-sm text-[#f87171]">
-            {(mutation.error as any)?.response?.data?.error ?? "Usage limit exceeded"}
+            {(mutation.error as { response?: { data?: { error?: string } } })?.response?.data?.error ??
+              "Usage limit exceeded"}
           </p>
         )}
       </div>

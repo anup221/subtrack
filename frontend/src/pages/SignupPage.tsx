@@ -1,12 +1,12 @@
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
-import { useNavigate } from "react-router-dom"
+import { useNavigate, Link } from "react-router-dom"
 import { signup } from "@/lib/api"
 import { useAppStore } from "@/store/appStore"
-import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
+import { AuthShell } from "@/components/layout/AuthShell"
 
 const schema = z.object({
   organizationName: z.string().min(2, "Organization name is required"),
@@ -39,27 +39,31 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center">
-      <Card className="glow-border w-96 space-y-4">
-        <h1 className="text-xl font-semibold">Create your organization</h1>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
-          <Input placeholder="Organization name" {...register("organizationName")} />
-          {errors.organizationName && (
-            <p className="text-sm text-red-400">{errors.organizationName.message}</p>
-          )}
-          <Input placeholder="Email" {...register("email")} />
-          {errors.email && (
-            <p className="text-sm text-red-400">{errors.email.message}</p>
-          )}
-          <Input type="password" placeholder="Password" {...register("password")} />
-          {errors.password && (
-            <p className="text-sm text-red-400">{errors.password.message}</p>
-          )}
-          <Button type="submit" disabled={isSubmitting} className="w-full">
-            {isSubmitting ? "Creating..." : "Sign up"}
-          </Button>
-        </form>
-      </Card>
-    </div>
+    <AuthShell
+      title="Create your organization"
+      subtitle="You'll be the owner. A trial subscription on the Free plan is provisioned automatically."
+      footer={
+        <>
+          Already have an account?{" "}
+          <Link to="/login" className="text-[#a78bfa] hover:underline">
+            Log in
+          </Link>
+        </>
+      }
+    >
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
+        <Input placeholder="Organization name" {...register("organizationName")} />
+        {errors.organizationName && (
+          <p className="text-sm text-[#f87171]">{errors.organizationName.message}</p>
+        )}
+        <Input placeholder="Email" autoComplete="email" {...register("email")} />
+        {errors.email && <p className="text-sm text-[#f87171]">{errors.email.message}</p>}
+        <Input type="password" placeholder="Password" autoComplete="new-password" {...register("password")} />
+        {errors.password && <p className="text-sm text-[#f87171]">{errors.password.message}</p>}
+        <Button type="submit" disabled={isSubmitting} className="mt-2 w-full">
+          {isSubmitting ? "Creating..." : "Sign up"}
+        </Button>
+      </form>
+    </AuthShell>
   )
 }

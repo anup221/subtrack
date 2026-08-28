@@ -1,12 +1,12 @@
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
-import { useNavigate } from "react-router-dom"
+import { useNavigate, Link } from "react-router-dom"
 import { login } from "@/lib/api"
 import { useAppStore } from "@/store/appStore"
-import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
+import { AuthShell } from "@/components/layout/AuthShell"
 
 const schema = z.object({
   email: z.string().email("Enter a valid email"),
@@ -38,23 +38,27 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center">
-      <Card className="glow-border w-96 space-y-4">
-        <h1 className="text-xl font-semibold">Log in</h1>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
-          <Input placeholder="Email" {...register("email")} />
-          {errors.email && (
-            <p className="text-sm text-red-400">{errors.email.message}</p>
-          )}
-          <Input type="password" placeholder="Password" {...register("password")} />
-          {errors.password && (
-            <p className="text-sm text-red-400">{errors.password.message}</p>
-          )}
-          <Button type="submit" disabled={isSubmitting} className="w-full">
-            {isSubmitting ? "Logging in..." : "Log in"}
-          </Button>
-        </form>
-      </Card>
-    </div>
+    <AuthShell
+      title="Log in"
+      subtitle="Access your organization's billing workspace."
+      footer={
+        <>
+          New here?{" "}
+          <Link to="/signup" className="text-[#a78bfa] hover:underline">
+            Create an organization
+          </Link>
+        </>
+      }
+    >
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
+        <Input placeholder="Email" autoComplete="email" {...register("email")} />
+        {errors.email && <p className="text-sm text-[#f87171]">{errors.email.message}</p>}
+        <Input type="password" placeholder="Password" autoComplete="current-password" {...register("password")} />
+        {errors.password && <p className="text-sm text-[#f87171]">{errors.password.message}</p>}
+        <Button type="submit" disabled={isSubmitting} className="mt-2 w-full">
+          {isSubmitting ? "Logging in..." : "Log in"}
+        </Button>
+      </form>
+    </AuthShell>
   )
 }

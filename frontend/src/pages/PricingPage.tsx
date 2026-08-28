@@ -5,6 +5,8 @@ import { getPlans, getCurrentSubscription, changePlan } from "@/lib/api"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { PageHeader } from "@/components/ui/page-header"
+import { cn } from "@/lib/utils"
 
 export default function PricingPage() {
   const navigate = useNavigate()
@@ -33,32 +35,38 @@ export default function PricingPage() {
   }
 
   return (
-    <div className="space-y-8 max-w-5xl">
-      <div>
-        <h1 className="text-2xl font-semibold">Choose your plan</h1>
-        <p className="text-[#8b8b9c] text-sm mt-1">Upgrade or downgrade anytime — changes apply immediately.</p>
-      </div>
+    <div className="mx-auto max-w-5xl space-y-8">
+      <PageHeader
+        eyebrow="Plans"
+        title="Choose your plan"
+        description="Upgrade or downgrade anytime — changes apply immediately to this organization."
+      />
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
         {plans?.map((plan) => {
           const isCurrent = subscription?.plan.id === plan.id
           const isPopular = plan.name === "Pro"
           return (
-            <Card key={plan.id} className={cn("space-y-4 relative", isCurrent && "glow-border")}>
+            <Card
+              key={plan.id}
+              className={cn("relative space-y-5", isCurrent && "glow-border", isPopular && !isCurrent && "border-[#7c5cff]/25")}
+            >
               {isPopular && (
                 <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#7c5cff] text-white">
-                  Most Popular
+                  Most popular
                 </Badge>
               )}
-              <h2 className="text-xl font-semibold">{plan.name}</h2>
-              <p className="text-3xl font-bold">
-                ${(plan.priceCents / 100).toFixed(0)}
-                <span className="text-sm text-[#8b8b9c] font-normal">/mo</span>
-              </p>
-              <ul className="text-sm text-[#8b8b9c] space-y-2">
+              <div>
+                <h2 className="text-xl font-semibold">{plan.name}</h2>
+                <p className="mt-3 text-3xl font-bold tracking-tight">
+                  ${(plan.priceCents / 100).toFixed(0)}
+                  <span className="text-sm font-normal text-[#8b8b9c]">/mo</span>
+                </p>
+              </div>
+              <ul className="space-y-2.5 text-sm text-[#8b8b9c]">
                 {plan.features.map((feature) => (
                   <li key={feature} className="flex items-start gap-2">
-                    <Check size={16} className="text-[#7c5cff] mt-0.5 shrink-0" />
+                    <Check size={16} className="mt-0.5 shrink-0 text-[#7c5cff]" />
                     {feature}
                   </li>
                 ))}
@@ -69,7 +77,7 @@ export default function PricingPage() {
                 disabled={isCurrent || mutation.isPending}
                 onClick={() => mutation.mutate(plan.id)}
               >
-                {isCurrent ? "Current Plan" : mutation.isPending ? "Switching..." : "Choose Plan"}
+                {isCurrent ? "Current plan" : mutation.isPending ? "Switching..." : "Choose plan"}
               </Button>
             </Card>
           )
@@ -77,8 +85,4 @@ export default function PricingPage() {
       </div>
     </div>
   )
-}
-
-function cn(...classes: (string | false | undefined)[]) {
-  return classes.filter(Boolean).join(" ")
 }

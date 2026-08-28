@@ -5,13 +5,8 @@ import { getInvoices, generateInvoice, payInvoice, getPayments, type Invoice } f
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-
-const statusStyles: Record<string, string> = {
-  PAID: "bg-[#34d399]/15 text-[#34d399]",
-  SUCCEEDED: "bg-[#34d399]/15 text-[#34d399]",
-  FAILED: "bg-[#f87171]/15 text-[#f87171]",
-  PENDING: "bg-[#fbbf24]/15 text-[#fbbf24]",
-}
+import { PageHeader } from "@/components/ui/page-header"
+import { paymentStatusStyles } from "@/lib/statusStyles"
 
 export default function BillingPage() {
   const queryClient = useQueryClient()
@@ -47,38 +42,40 @@ export default function BillingPage() {
   }
 
   return (
-    <div className="space-y-8 max-w-3xl">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold">Billing</h1>
-          <p className="text-[#8b8b9c] text-sm mt-1">Invoices and payment history for your organization.</p>
-        </div>
-        <Button onClick={() => generateMutation.mutate()} disabled={generateMutation.isPending}>
-          {generateMutation.isPending ? "Generating..." : "Generate Invoice (test)"}
-        </Button>
-      </div>
+    <div className="mx-auto max-w-3xl space-y-8">
+      <PageHeader
+        eyebrow="Invoicing"
+        title="Billing"
+        description="Invoices and payment history for your organization only."
+        actions={
+          <Button onClick={() => generateMutation.mutate()} disabled={generateMutation.isPending}>
+            {generateMutation.isPending ? "Generating..." : "Generate invoice (test)"}
+          </Button>
+        }
+      />
 
       <div className="space-y-3">
         {invoices?.length === 0 && (
-          <Card className="flex flex-col items-center text-center py-10 space-y-2">
-            <Receipt size={24} className="text-[#8b8b9c]" />
-            <p className="text-sm text-[#8b8b9c]">No invoices yet — click "Generate Invoice" to create one.</p>
+          <Card className="flex flex-col items-center space-y-2 py-12 text-center">
+            <Receipt size={28} className="text-[#5c5c6b]" />
+            <p className="text-sm text-[#8b8b9c]">No invoices yet — generate one to start the payment flow.</p>
           </Card>
         )}
         {invoices?.map((invoice) => (
           <Card
             key={invoice.id}
-            className="cursor-pointer hover:border-[#7c5cff]/50 transition-colors"
+            className="cursor-pointer hover:border-[#7c5cff]/50"
             onClick={() => setSelected(invoice)}
           >
-            <div className="flex items-center justify-between">
-              <div className="space-y-1">
+            <div className="flex items-center justify-between gap-4">
+              <div className="space-y-2">
                 <p className="text-sm text-[#8b8b9c]">
-                  {new Date(invoice.periodStart).toLocaleDateString()} – {new Date(invoice.periodEnd).toLocaleDateString()}
+                  {new Date(invoice.periodStart).toLocaleDateString()} –{" "}
+                  {new Date(invoice.periodEnd).toLocaleDateString()}
                 </p>
-                <Badge className={statusStyles[invoice.status]}>{invoice.status}</Badge>
+                <Badge className={paymentStatusStyles[invoice.status]}>{invoice.status}</Badge>
               </div>
-              <div className="text-right space-y-2">
+              <div className="space-y-2 text-right">
                 <p className="text-lg font-semibold">${(invoice.totalCents / 100).toFixed(2)}</p>
                 {invoice.status !== "PAID" && (
                   <Button
@@ -89,7 +86,7 @@ export default function BillingPage() {
                     }}
                     disabled={payMutation.isPending}
                   >
-                    {payMutation.isPending ? "Charging..." : "Pay Now"}
+                    {payMutation.isPending ? "Charging..." : "Pay now"}
                   </Button>
                 )}
               </div>
@@ -101,14 +98,14 @@ export default function BillingPage() {
       {selected && (
         <Card className="glow-border space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold">Invoice Detail</h2>
-            <button onClick={() => setSelected(null)} className="text-[#8b8b9c] text-sm hover:text-white">
+            <h2 className="text-lg font-semibold">Invoice detail</h2>
+            <button onClick={() => setSelected(null)} className="text-sm text-[#8b8b9c] hover:text-white">
               Close
             </button>
           </div>
 
           {selected.lineItems.map((item, i) => (
-            <div key={i} className="flex justify-between text-sm border-b border-[#24242f] py-2">
+            <div key={i} className="flex justify-between border-b border-[#262633] py-2 text-sm">
               <span className="text-[#8b8b9c]">
                 {item.description}
                 {item.quantity != null && ` (×${item.quantity})`}
@@ -116,18 +113,18 @@ export default function BillingPage() {
               <span>${(item.amountCents / 100).toFixed(2)}</span>
             </div>
           ))}
-          <div className="flex justify-between text-base font-semibold pt-2">
+          <div className="flex justify-between pt-2 text-base font-semibold">
             <span>Total</span>
             <span>${(selected.totalCents / 100).toFixed(2)}</span>
           </div>
 
           {payments && payments.length > 0 && (
-            <div className="pt-4 space-y-2">
+            <div className="space-y-2 pt-4">
               <p className="text-sm text-[#8b8b9c]">Payment attempts</p>
               {payments.map((p) => (
-                <div key={p.id} className="flex justify-between items-center text-sm">
+                <div key={p.id} className="flex items-center justify-between text-sm">
                   <span className="text-[#8b8b9c]">Attempt #{p.attemptNumber}</span>
-                  <Badge className={statusStyles[p.status]}>{p.status}</Badge>
+                  <Badge className={paymentStatusStyles[p.status]}>{p.status}</Badge>
                 </div>
               ))}
             </div>
