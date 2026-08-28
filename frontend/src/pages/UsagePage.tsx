@@ -20,7 +20,7 @@ export default function UsagePage() {
   })
 
   if (isLoading) {
-    return <div className="min-h-screen flex items-center justify-center text-[#8b8b9c]">Loading usage...</div>
+    return <p className="text-[#8b8b9c]">Loading usage...</p>
   }
 
   const percentUsed = summary
@@ -33,10 +33,13 @@ export default function UsagePage() {
   })) ?? []
 
   return (
-    <div className="min-h-screen p-12 space-y-8">
-      <h1 className="text-2xl font-semibold">Usage</h1>
+    <div className="space-y-8 max-w-3xl">
+      <div>
+        <h1 className="text-2xl font-semibold">Usage</h1>
+        <p className="text-[#8b8b9c] text-sm mt-1">Track your API usage against your plan's limit.</p>
+      </div>
 
-      <Card className="glow-border max-w-lg space-y-3">
+      <Card className="glow-border space-y-3">
         <p className="text-sm text-[#8b8b9c]">This billing period</p>
         <p className="text-xl font-semibold">
           {summary?.currentPeriodUsage.toLocaleString()} / {summary?.maxUsage.toLocaleString()} calls
@@ -45,7 +48,7 @@ export default function UsagePage() {
         <p className="text-xs text-[#8b8b9c]">{percentUsed}% of plan limit used</p>
       </Card>
 
-      <Card className="max-w-2xl">
+      <Card>
         <p className="text-sm text-[#8b8b9c] mb-4">Daily usage (last 30 days)</p>
         <AreaChart
           data={chartData}
@@ -56,17 +59,16 @@ export default function UsagePage() {
         />
       </Card>
 
-      <Button
-        onClick={() => mutation.mutate(Math.floor(Math.random() * 40) + 10)}
-        disabled={mutation.isPending}
-      >
-        {mutation.isPending ? "Recording..." : "Simulate 10-50 API calls"}
-      </Button>
-      {mutation.isError && (
-        <p className="text-sm text-red-400">
-          {(mutation.error as any)?.response?.data?.error ?? "Usage limit exceeded"}
-        </p>
-      )}
+      <div className="space-y-2">
+        <Button onClick={() => mutation.mutate(Math.floor(Math.random() * 40) + 10)} disabled={mutation.isPending}>
+          {mutation.isPending ? "Recording..." : "Simulate 10-50 API calls"}
+        </Button>
+        {mutation.isError && (
+          <p className="text-sm text-[#f87171]">
+            {(mutation.error as any)?.response?.data?.error ?? "Usage limit exceeded"}
+          </p>
+        )}
+      </div>
     </div>
   )
 }

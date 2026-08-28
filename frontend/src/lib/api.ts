@@ -101,3 +101,77 @@ export async function getUsageSummary(): Promise<UsageSummary> {
   const { data } = await api.get<UsageSummary>("/api/usage/summary")
   return data
 }
+
+export type InvoiceLineItem = {
+  description: string
+  amountCents: number
+  quantity: number | null
+}
+
+export type Invoice = {
+  id: string
+  status: "PENDING" | "PAID" | "FAILED"
+  periodStart: string
+  periodEnd: string
+  totalCents: number
+  lineItems: InvoiceLineItem[]
+}
+
+export async function getInvoices(): Promise<Invoice[]> {
+  const { data } = await api.get<Invoice[]>("/api/invoices")
+  return data
+}
+
+export async function getInvoice(id: string): Promise<Invoice> {
+  const { data } = await api.get<Invoice>(`/api/invoices/${id}`)
+  return data
+}
+
+export async function generateInvoice(): Promise<Invoice> {
+  const { data } = await api.post<Invoice>("/api/invoices/generate")
+  return data
+}
+
+export type Payment = {
+  id: string
+  invoiceId: string
+  amountCents: number
+  status: "PENDING" | "SUCCEEDED" | "FAILED"
+  attemptNumber: number
+  createdAt: string
+}
+
+export async function payInvoice(invoiceId: string): Promise<Payment> {
+  const { data } = await api.post<Payment>(`/api/payments/pay/${invoiceId}`)
+  return data
+}
+
+export async function getPayments(invoiceId: string): Promise<Payment[]> {
+  const { data } = await api.get<Payment[]>(`/api/payments/invoice/${invoiceId}`)
+  return data
+}
+
+export type AdminMetrics = {
+  mrrCents: number
+  totalOrganizations: number
+  activeSubscriptions: number
+  churnRatePercent: number
+}
+
+export type TenantSummary = {
+  organizationId: string
+  organizationName: string
+  planName: string
+  subscriptionStatus: string
+  createdAt: string
+}
+
+export async function getAdminMetrics(): Promise<AdminMetrics> {
+  const { data } = await api.get<AdminMetrics>("/api/admin/metrics")
+  return data
+}
+
+export async function getAdminTenants(): Promise<TenantSummary[]> {
+  const { data } = await api.get<TenantSummary[]>("/api/admin/tenants")
+  return data
+}

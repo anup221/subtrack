@@ -6,11 +6,23 @@ import SignupPage from "@/pages/SignupPage"
 import PricingPage from "@/pages/PricingPage"
 import DashboardHome from "@/pages/DashboardHome"
 import UsagePage from "@/pages/UsagePage"
+import BillingPage from "@/pages/BillingPage"
+import AdminOverview from "@/pages/AdminOverview"
+import { DashboardLayout } from "@/components/layout/DashboardLayout"
 import { useAppStore } from "@/store/appStore"
 
 function ProtectedRoute({ children }: { children: ReactNode }) {
   const token = useAppStore((s) => s.token)
-  return token ? <>{children}</> : <Navigate to="/login" replace />
+  if (!token) return <Navigate to="/login" replace />
+  return <DashboardLayout>{children}</DashboardLayout>
+}
+
+function AdminRoute({ children }: { children: ReactNode }) {
+  const token = useAppStore((s) => s.token)
+  const role = useAppStore((s) => s.role)
+  if (!token) return <Navigate to="/login" replace />
+  if (role !== "OWNER" && role !== "ADMIN") return <Navigate to="/dashboard" replace />
+  return <DashboardLayout>{children}</DashboardLayout>
 }
 
 export const router = createBrowserRouter([
@@ -39,6 +51,22 @@ export const router = createBrowserRouter([
       <ProtectedRoute>
         <UsagePage />
       </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/billing",
+    element: (
+      <ProtectedRoute>
+        <BillingPage />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/admin",
+    element: (
+      <AdminRoute>
+        <AdminOverview />
+      </AdminRoute>
     ),
   },
 ])
