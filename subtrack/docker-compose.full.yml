@@ -1,0 +1,33 @@
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: subtrack
+      POSTGRES_USER: subtrack
+      POSTGRES_PASSWORD: subtrack
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7
+
+  backend:
+    build: .
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DATABASE_URL: jdbc:postgresql://postgres:5432/subtrack
+      DATABASE_USERNAME: subtrack
+      DATABASE_PASSWORD: subtrack
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      JWT_SECRET: local-docker-test-secret-change-me
+      WEBHOOK_SECRET: local-docker-webhook-secret
+      FRONTEND_URL: http://localhost:5173
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+      - redis
+
+volumes:
+  pgdata:
