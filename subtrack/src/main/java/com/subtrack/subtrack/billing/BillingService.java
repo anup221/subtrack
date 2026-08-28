@@ -11,10 +11,10 @@ import com.subtrack.subtrack.usage.UsageDailySummaryRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -29,6 +29,16 @@ public class BillingService {
 
     /** Generates one invoice covering [periodStart, periodEnd] for a single organization. */
     public InvoiceResponse generateInvoiceForOrg(UUID organizationId, LocalDate periodStart, LocalDate periodEnd) {
+        // Prevent double-billing: if an invoice already exists for this org covering this period, return it instead
+        Optional<Invoice> existing = invoiceRepository.findByOrganizationIdOrderByCreatedAtDesc(organizationId).stream()
+                .filter(inv -> !inv.getPeriodStart().isAfter(periodEnd.atStartOfDay(ZoneOffset.UTC).toInstant())
+                        && !inv.getPeriodEnd().isBefore(periodStart.atStartOfDay(ZoneOffset.UTC).toInstant()))
+                .findFirst();
+
+        if (existing.isPresent()) {
+            return toResponse(existing.get(), invoiceLineItemRepository.findByInvoiceId(existing.get().getId()));
+        }
+
         Subscription subscription = subscriptionRepository.findByOrganizationId(organizationId)
                 .orElseThrow(() -> new IllegalStateException("No subscription found for this organization"));
 
