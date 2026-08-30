@@ -24,5 +24,10 @@ jwt:
 webhook:
   secret: "dev-webhook-shared-secret-change-in-prod"
 
+razorpay:
+  key-id: "rzp_test_TVzjLsAJRjEm3d"
+  key-secret: "uqJLWCICpj98PPV7IjdsdeUI"
+  webhook-secret: "not-set-up-yet"
+
 server:
   port: 8080

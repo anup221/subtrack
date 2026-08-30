@@ -175,3 +175,26 @@ export async function getAdminTenants(): Promise<TenantSummary[]> {
   const { data } = await api.get<TenantSummary[]>("/api/admin/tenants")
   return data
 }
+
+export type CreateOrderResponse = {
+  razorpayOrderId: string
+  amountCents: number
+  currency: string
+  keyId: string
+  invoiceId: string
+}
+
+export async function createRazorpayOrder(invoiceId: string): Promise<CreateOrderResponse> {
+  const { data } = await api.post<CreateOrderResponse>(`/api/payments/razorpay/create-order/${invoiceId}`)
+  return data
+}
+
+export async function verifyRazorpayPayment(payload: {
+  invoiceId: string
+  razorpayOrderId: string
+  razorpayPaymentId: string
+  razorpaySignature: string
+}): Promise<Payment> {
+  const { data } = await api.post<Payment>("/api/payments/razorpay/verify", payload)
+  return data
+}

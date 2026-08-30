@@ -1,7 +1,15 @@
 import { useState } from "react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { Receipt } from "lucide-react"
-import { getInvoices, generateInvoice, payInvoice, getPayments, type Invoice } from "@/lib/api"
+import {
+  getInvoices,
+  generateInvoice,
+  payInvoice,
+  getPayments,
+  createRazorpayOrder,
+  verifyRazorpayPayment,
+  type Invoice,
+} from "@/lib/api"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -11,6 +19,7 @@ import { paymentStatusStyles } from "@/lib/statusStyles"
 export default function BillingPage() {
   const queryClient = useQueryClient()
   const [selected, setSelected] = useState<Invoice | null>(null)
+  const [razorpayLoading, setRazorpayLoading] = useState<string | null>(null)
 
   const { data: invoices, isLoading } = useQuery({
     queryKey: ["invoices"],
@@ -36,6 +45,39 @@ export default function BillingPage() {
       queryClient.invalidateQueries({ queryKey: ["subscription"] })
     },
   })
+
+  async function payWithRazorpay(invoiceId: string) {
+    setRazorpayLoading(invoiceId)
+    try {
+      const order = await createRazorpayOrder(invoiceId)
+
+      const razorpay = new window.Razorpay({
+        key: order.keyId,
+        amount: order.amountCents,
+        currency: order.currency,
+        name: "SubTrack",
+        description: "Invoice payment",
+        order_id: order.razorpayOrderId,
+        theme: { color: "#7c5cff" },
+        handler: async (response) => {
+          await verifyRazorpayPayment({
+            invoiceId: order.invoiceId,
+            razorpayOrderId: response.razorpay_order_id,
+            razorpayPaymentId: response.razorpay_payment_id,
+            razorpaySignature: response.razorpay_signature,
+          })
+          queryClient.invalidateQueries({ queryKey: ["invoices"] })
+          queryClient.invalidateQueries({ queryKey: ["payments"] })
+          queryClient.invalidateQueries({ queryKey: ["subscription"] })
+          setRazorpayLoading(null)
+        },
+      })
+
+      razorpay.open()
+    } catch {
+      setRazorpayLoading(null)
+    }
+  }
 
   if (isLoading) {
     return <p className="text-[#8b8b9c]">Loading invoices...</p>
@@ -78,16 +120,29 @@ export default function BillingPage() {
               <div className="space-y-2 text-right">
                 <p className="text-lg font-semibold">${(invoice.totalCents / 100).toFixed(2)}</p>
                 {invoice.status !== "PAID" && (
-                  <Button
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      payMutation.mutate(invoice.id)
-                    }}
-                    disabled={payMutation.isPending}
-                  >
-                    {payMutation.isPending ? "Charging..." : "Pay now"}
-                  </Button>
+                  <div className="flex gap-2 justify-end">
+                    <Button
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        payMutation.mutate(invoice.id)
+                      }}
+                      disabled={payMutation.isPending}
+                    >
+                      {payMutation.isPending ? "Charging..." : "Pay now"}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        payWithRazorpay(invoice.id)
+                      }}
+                      disabled={razorpayLoading === invoice.id}
+                    >
+                      {razorpayLoading === invoice.id ? "Opening..." : "Pay with Razorpay"}
+                    </Button>
+                  </div>
                 )}
               </div>
             </div>
