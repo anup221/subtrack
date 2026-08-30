@@ -1,6 +1,7 @@
 package com.subtrack.subtrack.subscription;
 
 import com.subtrack.subtrack.subscription.dto.ChangePlanRequest;
+import com.subtrack.subtrack.subscription.dto.ChangePlanResponse;
 import com.subtrack.subtrack.subscription.dto.SubscriptionResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -22,7 +23,7 @@ public class SubscriptionController {
     }
 
     @PostMapping("/change-plan")
-    public SubscriptionResponse changePlan(@RequestBody ChangePlanRequest request) {
+    public ChangePlanResponse changePlan(@RequestBody ChangePlanRequest request) {
         return subscriptionService.changePlan(request);
     }
 

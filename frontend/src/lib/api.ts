@@ -71,8 +71,13 @@ export async function getCurrentSubscription(): Promise<Subscription> {
   return data
 }
 
-export async function changePlan(planId: string): Promise<Subscription> {
-  const { data } = await api.post<Subscription>("/api/subscriptions/change-plan", { planId })
+export type ChangePlanResponse = {
+  subscription: Subscription
+  upgradeInvoice: Invoice | null
+}
+
+export async function changePlan(planId: string): Promise<ChangePlanResponse> {
+  const { data } = await api.post<ChangePlanResponse>("/api/subscriptions/change-plan", { planId })
   return data
 }
 

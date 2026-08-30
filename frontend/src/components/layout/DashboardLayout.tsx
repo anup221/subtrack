@@ -13,6 +13,7 @@ import {
   X,
 } from "lucide-react"
 import { useAppStore } from "@/store/appStore"
+import { ThemeToggle } from "@/components/ui/theme-toggle"
 import { cn } from "@/lib/utils"
 
 const workspaceNav = [
@@ -62,9 +63,9 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
           "flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-sm transition-colors",
           active
             ? accent === "cyan"
-              ? "border border-[#22d3ee]/30 bg-[#22d3ee]/12 text-white"
-              : "border border-[#7c5cff]/30 bg-[#7c5cff]/15 text-white"
-            : "text-[#8b8b9c] hover:bg-white/5 hover:text-white"
+              ? "border border-[color-mix(in_srgb,var(--accent-2)_30%,transparent)] bg-[color-mix(in_srgb,var(--accent-2)_12%,transparent)] text-[var(--text)]"
+              : "border border-[color-mix(in_srgb,var(--accent)_30%,transparent)] bg-[color-mix(in_srgb,var(--accent)_15%,transparent)] text-[var(--text)]"
+            : "text-[var(--text-muted)] hover:bg-[var(--surface-hover)] hover:text-[var(--text)]"
         )}
       >
         <Icon size={16} />
@@ -81,13 +82,13 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
         </div>
         <div>
           <p className="text-sm font-semibold tracking-tight">SubTrack</p>
-          <p className="text-[10px] uppercase tracking-[0.16em] text-[#5c5c6b]">Billing OS</p>
+          <p className="text-[10px] uppercase tracking-[0.16em] text-[var(--text-faint)]">Billing OS</p>
         </div>
       </div>
 
       <nav className="flex-1 space-y-5">
         <div className="space-y-1">
-          <p className="px-2 pb-1 text-[10px] font-medium uppercase tracking-[0.16em] text-[#5c5c6b]">
+          <p className="px-2 pb-1 text-[10px] font-medium uppercase tracking-[0.16em] text-[var(--text-faint)]">
             Workspace
           </p>
           {workspaceNav.map((item) => (
@@ -97,7 +98,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
 
         {canSeeOrgConsole && (
           <div className="space-y-1">
-            <p className="px-2 pb-1 text-[10px] font-medium uppercase tracking-[0.16em] text-[#5c5c6b]">
+            <p className="px-2 pb-1 text-[10px] font-medium uppercase tracking-[0.16em] text-[var(--text-faint)]">
               Organization
             </p>
             <NavButton
@@ -111,7 +112,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
 
         {canSeePlatform && (
           <div className="space-y-1">
-            <p className="px-2 pb-1 text-[10px] font-medium uppercase tracking-[0.16em] text-[#5c5c6b]">
+            <p className="px-2 pb-1 text-[10px] font-medium uppercase tracking-[0.16em] text-[var(--text-faint)]">
               Platform
             </p>
             <NavButton path="/admin" label="Admin console" icon={Users} accent="violet" />
@@ -119,14 +120,15 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
         )}
       </nav>
 
-      <div className="space-y-3 border-t border-[#262633] pt-4">
+      <div className="space-y-3 border-t border-[var(--border)] pt-4">
         <div className="px-2">
           <p className="truncate text-sm">{email}</p>
-          <p className="mt-0.5 text-xs text-[#8b8b9c]">{role}</p>
+          <p className="mt-0.5 text-xs text-[var(--text-muted)]">{role}</p>
         </div>
+        <ThemeToggle />
         <button
           onClick={handleLogout}
-          className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm text-[#8b8b9c] transition-colors hover:bg-white/5 hover:text-[#f87171]"
+          className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm text-[var(--text-muted)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[#f87171]"
         >
           <LogOut size={16} />
           Log out
@@ -137,7 +139,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex min-h-screen">
-      <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-[#262633] bg-[#0c0c14]/80 p-5 backdrop-blur-xl lg:flex">
+      <aside className="sidebar-bg sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-[var(--border)] p-5 backdrop-blur-xl lg:flex">
         {sidebar}
       </aside>
 
@@ -148,9 +150,9 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
             onClick={() => setOpen(false)}
             aria-label="Close menu"
           />
-          <aside className="relative z-50 flex h-full w-64 flex-col border-r border-[#262633] bg-[#0c0c14] p-5">
+          <aside className="relative z-50 flex h-full w-64 flex-col border-r border-[var(--border)] bg-[var(--surface)] p-5">
             <button
-              className="mb-4 self-end rounded-lg p-1 text-[#8b8b9c] hover:text-white"
+              className="mb-4 self-end rounded-lg p-1 text-[var(--text-muted)] hover:text-[var(--text)]"
               onClick={() => setOpen(false)}
               aria-label="Close"
             >
@@ -162,10 +164,10 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
       )}
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 flex items-center gap-3 border-b border-[#262633] bg-[#07070c]/80 px-4 py-3 backdrop-blur-xl lg:hidden">
+        <header className="header-bg sticky top-0 z-30 flex items-center gap-3 border-b border-[var(--border)] px-4 py-3 backdrop-blur-xl lg:hidden">
           <button
             onClick={() => setOpen(true)}
-            className="rounded-lg p-2 text-[#8b8b9c] hover:bg-white/5 hover:text-white"
+            className="rounded-lg p-2 text-[var(--text-muted)] hover:bg-[var(--surface-hover)] hover:text-[var(--text)]"
             aria-label="Open menu"
           >
             <Menu size={18} />

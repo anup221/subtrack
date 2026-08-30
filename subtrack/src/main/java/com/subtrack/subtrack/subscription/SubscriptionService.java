@@ -1,9 +1,12 @@
 package com.subtrack.subtrack.subscription;
 
+import com.subtrack.subtrack.billing.BillingService;
+import com.subtrack.subtrack.billing.dto.InvoiceResponse;
 import com.subtrack.subtrack.plan.Plan;
 import com.subtrack.subtrack.plan.PlanRepository;
 import com.subtrack.subtrack.plan.PlanService;
 import com.subtrack.subtrack.subscription.dto.ChangePlanRequest;
+import com.subtrack.subtrack.subscription.dto.ChangePlanResponse;
 import com.subtrack.subtrack.subscription.dto.SubscriptionResponse;
 import com.subtrack.subtrack.tenant.TenantContext;
 import lombok.RequiredArgsConstructor;
@@ -22,8 +25,8 @@ public class SubscriptionService {
     private final SubscriptionRepository subscriptionRepository;
     private final PlanRepository planRepository;
     private final PlanService planService;
+    private final BillingService billingService;
 
-    /** Called from AuthService right after a new organization is created. */
     public void createTrialSubscription(UUID organizationId) {
         Subscription sub = new Subscription();
         sub.setOrganizationId(organizationId);
@@ -41,29 +44,64 @@ public class SubscriptionService {
         return toResponse(sub);
     }
 
-    public SubscriptionResponse changePlan(ChangePlanRequest request) {
+    public ChangePlanResponse changePlan(ChangePlanRequest request) {
         UUID organizationId = TenantContext.get();
         Subscription sub = subscriptionRepository.findByOrganizationId(organizationId)
                 .orElseThrow(() -> new IllegalStateException("No subscription found for this organization"));
 
-        if (!planRepository.existsById(request.planId())) {
-            throw new IllegalArgumentException("Plan not found");
-        }
+        Plan oldPlan = planRepository.findById(sub.getPlanId())
+                .orElseThrow(() -> new IllegalStateException("Current plan not found"));
+        Plan newPlan = planRepository.findById(request.planId())
+                .orElseThrow(() -> new IllegalArgumentException("Plan not found"));
 
         SubscriptionStatus targetStatus = sub.getStatus() == SubscriptionStatus.TRIAL
                 ? SubscriptionStatus.ACTIVE
                 : sub.getStatus();
 
         if (sub.getStatus() != targetStatus && !sub.getStatus().canTransitionTo(targetStatus)) {
-            throw new IllegalStateException(
-                    "Cannot change plan while subscription is " + sub.getStatus());
+            throw new IllegalStateException("Cannot change plan while subscription is " + sub.getStatus());
         }
 
-        sub.setPlanId(request.planId());
+        int amountDueCents = calculateAmountDueCents(sub, oldPlan, newPlan);
+
+        sub.setPlanId(newPlan.getId());
         sub.setStatus(targetStatus);
         sub.setUpdatedAt(Instant.now());
         subscriptionRepository.save(sub);
-        return toResponse(sub);
+
+        InvoiceResponse upgradeInvoice = null;
+        if (amountDueCents > 0) {
+            upgradeInvoice = billingService.generateUpgradeInvoice(
+                    organizationId, sub.getId(), oldPlan, newPlan, amountDueCents, sub.getCurrentPeriodEnd());
+        }
+
+        return new ChangePlanResponse(toResponse(sub), upgradeInvoice);
+    }
+
+    /**
+     * Free plan → any paid plan: full price, no proration (nothing to credit).
+     * Paid plan → cheaper or equal plan: $0 due now — takes effect immediately, billed normally next cycle.
+     * Paid plan → more expensive plan: prorated difference for the days remaining in the current period.
+     */
+    private int calculateAmountDueCents(Subscription sub, Plan oldPlan, Plan newPlan) {
+        if (oldPlan.getPriceCents() == 0) {
+            return newPlan.getPriceCents();
+        }
+
+        if (newPlan.getPriceCents() <= oldPlan.getPriceCents()) {
+            return 0;
+        }
+
+        long daysInPeriod = Math.max(1,
+                ChronoUnit.DAYS.between(sub.getCurrentPeriodStart(), sub.getCurrentPeriodEnd()));
+        long daysRemaining = Math.max(0,
+                ChronoUnit.DAYS.between(Instant.now(), sub.getCurrentPeriodEnd()));
+
+        long unusedCreditCents = (long) oldPlan.getPriceCents() * daysRemaining / daysInPeriod;
+        long proratedNewCostCents = (long) newPlan.getPriceCents() * daysRemaining / daysInPeriod;
+        long amountDue = proratedNewCostCents - unusedCreditCents;
+
+        return (int) Math.max(0, amountDue);
     }
 
     public SubscriptionResponse cancel() {
@@ -72,8 +110,7 @@ public class SubscriptionService {
                 .orElseThrow(() -> new IllegalStateException("No subscription found for this organization"));
 
         if (!sub.getStatus().canTransitionTo(SubscriptionStatus.CANCELED)) {
-            throw new IllegalStateException(
-                    "Cannot cancel a subscription that is already " + sub.getStatus());
+            throw new IllegalStateException("Cannot cancel a subscription that is already " + sub.getStatus());
         }
 
         sub.setStatus(SubscriptionStatus.CANCELED);

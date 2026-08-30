@@ -24,9 +24,16 @@ export default function PricingPage() {
 
   const mutation = useMutation({
     mutationFn: changePlan,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["subscription"] })
-      navigate("/dashboard")
+    onSuccess: async (result) => {
+      // Force a fresh re-fetch (not just invalidate) so the new plan/price shows immediately
+      await queryClient.refetchQueries({ queryKey: ["subscription"] })
+      await queryClient.refetchQueries({ queryKey: ["plans"] })
+
+      if (result.upgradeInvoice) {
+        navigate("/billing")
+      } else {
+        navigate("/dashboard")
+      }
     },
   })
 
@@ -39,8 +46,18 @@ export default function PricingPage() {
       <PageHeader
         eyebrow="Plans"
         title="Choose your plan"
-        description="Upgrade or downgrade anytime — changes apply immediately to this organization."
+        description="Upgrades bill the prorated difference immediately. Downgrades apply now, billed next cycle."
       />
+
+      {mutation.data?.upgradeInvoice && (
+        <Card className="glow-border">
+          <p className="text-sm">
+            Your plan changed — an invoice for{" "}
+            <strong>${(mutation.data.upgradeInvoice.totalCents / 100).toFixed(2)}</strong> is waiting on the
+            Billing page.
+          </p>
+        </Card>
+      )}
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
         {plans?.map((plan) => {

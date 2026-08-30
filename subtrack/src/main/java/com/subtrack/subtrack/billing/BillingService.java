@@ -11,6 +11,7 @@ import com.subtrack.subtrack.usage.UsageDailySummaryRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.List;
@@ -79,6 +80,52 @@ public class BillingService {
         LocalDate end = LocalDate.now();
         LocalDate start = end.minusDays(30);
         return generateInvoiceForOrg(organizationId, start, end);
+    }
+
+    /**
+     * Creates (or returns the existing) PENDING invoice for a plan upgrade.
+     * Idempotent per organization + target plan: repeated calls before the invoice is paid
+     * return the same invoice instead of creating duplicates.
+     */
+    public InvoiceResponse generateUpgradeInvoice(
+            UUID organizationId,
+            UUID subscriptionId,
+            Plan oldPlan,
+            Plan newPlan,
+            int amountCents,
+            Instant periodEnd
+    ) {
+        String description = "Plan upgrade: " + oldPlan.getName() + " → " + newPlan.getName();
+
+        Optional<Invoice> existingPending = invoiceRepository
+                .findByOrganizationIdOrderByCreatedAtDesc(organizationId).stream()
+                .filter(inv -> inv.getStatus() == InvoiceStatus.PENDING)
+                .filter(inv -> invoiceLineItemRepository.findByInvoiceId(inv.getId()).stream()
+                        .anyMatch(li -> li.getDescription().equals(description)))
+                .findFirst();
+
+        if (existingPending.isPresent()) {
+            Invoice existing = existingPending.get();
+            return toResponse(existing, invoiceLineItemRepository.findByInvoiceId(existing.getId()));
+        }
+
+        Invoice invoice = new Invoice();
+        invoice.setOrganizationId(organizationId);
+        invoice.setSubscriptionId(subscriptionId);
+        invoice.setStatus(InvoiceStatus.PENDING);
+        invoice.setPeriodStart(Instant.now());
+        invoice.setPeriodEnd(periodEnd);
+        invoice.setTotalCents(amountCents);
+        invoiceRepository.save(invoice);
+
+        InvoiceLineItem line = new InvoiceLineItem();
+        line.setInvoiceId(invoice.getId());
+        line.setDescription(description);
+        line.setAmountCents(amountCents);
+        line.setQuantity(1);
+        invoiceLineItemRepository.save(line);
+
+        return toResponse(invoice, List.of(line));
     }
 
     public List<InvoiceResponse> listInvoicesForCurrentOrg() {
