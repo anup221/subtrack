@@ -4,6 +4,7 @@ import { Eye, EyeOff, ShieldCheck } from "lucide-react"
 
 import {
   adminLogin,
+  adminSignup,
   googleAdminLoginUrl,
 } from "@/lib/api"
 
@@ -26,6 +27,8 @@ export default function AdminLoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
+  const [signupMode, setSignupMode] = useState(false)
+  const [bootstrapCode, setBootstrapCode] = useState("")
 
   async function handleSubmit(
     event: React.FormEvent<HTMLFormElement>
@@ -36,7 +39,9 @@ export default function AdminLoginPage() {
     setLoading(true)
 
     try {
-      const data = await adminLogin(email, password)
+      const data = signupMode
+        ? await adminSignup(email, password, bootstrapCode)
+        : await adminLogin(email, password)
 
       setAdminSession(
         data.token,
@@ -85,7 +90,7 @@ export default function AdminLoginPage() {
             </p>
 
             <h1 className="text-3xl font-semibold tracking-[-0.04em]">
-              Admin login
+              {signupMode ? "Create admin account" : "Admin login"}
             </h1>
 
             <p className="mt-3 text-sm leading-6 text-[var(--st-text-muted)]">
@@ -127,6 +132,14 @@ export default function AdminLoginPage() {
                   required
                 />
               </div>
+
+              {signupMode && (
+                <div className="space-y-2">
+                  <label htmlFor="bootstrap-code" className="text-xs font-medium">Bootstrap code</label>
+                  <Input id="bootstrap-code" type="password" autoComplete="off" value={bootstrapCode}
+                    onChange={(event) => setBootstrapCode(event.target.value)} required />
+                </div>
+              )}
 
               <div className="space-y-2">
                 <label
@@ -184,9 +197,14 @@ export default function AdminLoginPage() {
               >
                 {loading
                   ? "Signing in..."
-                  : "Sign in as admin"}
+                  : signupMode ? "Create admin account" : "Sign in as admin"}
               </Button>
             </form>
+
+            <button type="button" className="mt-4 w-full text-sm text-[var(--st-accent)] hover:underline"
+              onClick={() => { setSignupMode((value) => !value); setError("") }}>
+              {signupMode ? "Already have an account? Sign in" : "Create the first admin account"}
+            </button>
 
             <div className="my-6 flex items-center gap-3">
               <div className="h-px flex-1 bg-[var(--st-border)]" />

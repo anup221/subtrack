@@ -3,9 +3,7 @@ import { useNavigate } from "react-router-dom"
 import {
   Building2,
   Calendar,
-  Check,
   Copy,
-  CreditCard,
   Gauge,
   ArrowRight,
 } from "lucide-react"

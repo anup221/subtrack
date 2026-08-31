@@ -10,6 +10,7 @@ import com.subtrack.subtrack.tenant.TenantContext;
 import com.subtrack.subtrack.usage.UsageDailySummaryRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -29,6 +30,7 @@ public class BillingService {
     private final UsageDailySummaryRepository usageDailySummaryRepository;
 
     /** Generates one invoice covering [periodStart, periodEnd] for a single organization. */
+    @Transactional
     public InvoiceResponse generateInvoiceForOrg(UUID organizationId, LocalDate periodStart, LocalDate periodEnd) {
         // Prevent double-billing: if an invoice already exists for this org covering this period, return it instead
         Optional<Invoice> existing = invoiceRepository.findByOrganizationIdOrderByCreatedAtDesc(organizationId).stream()
@@ -45,6 +47,10 @@ public class BillingService {
 
         Plan plan = planRepository.findById(subscription.getPlanId())
                 .orElseThrow(() -> new IllegalStateException("Plan not found for subscription"));
+
+        if (plan.getPriceCents() <= 0) {
+            throw new IllegalStateException("Free plans do not produce invoices");
+        }
 
         int usageInPeriod = usageDailySummaryRepository.sumUsageForPeriod(organizationId, periodStart, periodEnd);
 
@@ -87,6 +93,7 @@ public class BillingService {
      * Idempotent per organization + target plan: repeated calls before the invoice is paid
      * return the same invoice instead of creating duplicates.
      */
+    @Transactional
     public InvoiceResponse generateUpgradeInvoice(
             UUID organizationId,
             UUID subscriptionId,
@@ -95,17 +102,22 @@ public class BillingService {
             int amountCents,
             Instant periodEnd
     ) {
+        if (amountCents <= 0) {
+            throw new IllegalArgumentException("A payment invoice must have a positive amount");
+        }
         String description = "Plan upgrade: " + oldPlan.getName() + " → " + newPlan.getName();
 
         Optional<Invoice> existingPending = invoiceRepository
                 .findByOrganizationIdOrderByCreatedAtDesc(organizationId).stream()
                 .filter(inv -> inv.getStatus() == InvoiceStatus.PENDING)
-                .filter(inv -> invoiceLineItemRepository.findByInvoiceId(inv.getId()).stream()
-                        .anyMatch(li -> li.getDescription().equals(description)))
+                .filter(inv -> "PLAN_CHANGE".equals(inv.getInvoiceType()))
                 .findFirst();
 
         if (existingPending.isPresent()) {
             Invoice existing = existingPending.get();
+            if (!newPlan.getId().equals(existing.getTargetPlanId())) {
+                throw new IllegalStateException("A plan-change payment is already pending. Complete it before selecting another paid plan.");
+            }
             return toResponse(existing, invoiceLineItemRepository.findByInvoiceId(existing.getId()));
         }
 
@@ -113,6 +125,8 @@ public class BillingService {
         invoice.setOrganizationId(organizationId);
         invoice.setSubscriptionId(subscriptionId);
         invoice.setStatus(InvoiceStatus.PENDING);
+        invoice.setInvoiceType("PLAN_CHANGE");
+        invoice.setTargetPlanId(newPlan.getId());
         invoice.setPeriodStart(Instant.now());
         invoice.setPeriodEnd(periodEnd);
         invoice.setTotalCents(amountCents);

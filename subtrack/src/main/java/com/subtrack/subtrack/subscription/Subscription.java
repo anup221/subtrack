@@ -29,6 +29,12 @@ public class Subscription {
     @Column(name = "plan_id", nullable = false)
     private UUID planId;
 
+    @Column(name = "pending_plan_id")
+    private UUID pendingPlanId;
+
+    @Column(name = "pending_plan_invoice_id")
+    private UUID pendingPlanInvoiceId;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private SubscriptionStatus status;

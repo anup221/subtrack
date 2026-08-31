@@ -6,19 +6,26 @@ export default function OAuthCompletePage() {
   const [params] = useSearchParams()
   const navigate = useNavigate()
   const setAdminSession = useAppStore((s) => s.setAdminSession)
+  const setSession = useAppStore((s) => s.setSession)
 
   useEffect(() => {
     const token = params.get("token")
-    if (token) {
-      // In a real build, decode the JWT to tell org vs admin apart, or check which page
-      // initiated the redirect. Simplest for now: store it and let the next page's data
-      // fetch determine which dashboard to route to based on what the token can access.
+    if (token && params.get("type") === "admin") {
       setAdminSession(token, "")
       navigate("/admin")
+    } else if (token) {
+      const payload = JSON.parse(atob(token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")))
+      setSession({
+        token,
+        email: payload.sub ?? "",
+        role: payload.role ?? "OWNER",
+        organizationId: payload.organizationId ?? null,
+      })
+      navigate("/dashboard")
     } else {
       navigate("/login")
     }
-  }, [params])
+  }, [params, navigate, setAdminSession, setSession])
 
   return <p className="text-[var(--text-muted)] p-10">Signing you in...</p>
 }

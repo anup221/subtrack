@@ -32,15 +32,9 @@ public class BillingController {
         return billingService.getInvoiceForCurrentOrg(id);
     }
 
-    /** Dev/testing only — generates one invoice for the calling user's own org, last 30 days. */
-    @PostMapping("/generate")
-    public InvoiceResponse generateInvoice() {
-        return billingService.generateInvoiceForCurrentOrg();
-    }
-
-    /** Dev/testing only — runs the full monthly billing cycle for ALL orgs immediately. Admin/Owner only. */
+    /** Operational trigger; platform administrators only. */
     @PostMapping("/run-cycle")
-    @PreAuthorize("hasRole('OWNER') or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('PLATFORM_ADMIN')")
     public String runCycleNow(
             @RequestParam String periodStart,
             @RequestParam String periodEnd

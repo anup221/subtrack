@@ -1,6 +1,6 @@
 package com.subtrack.subtrack.webhook;
 
-import tools.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.subtrack.subtrack.webhook.dto.WebhookPayload;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

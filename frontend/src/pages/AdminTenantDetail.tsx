@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
-import { Link, useNavigate, useParams } from "react-router-dom"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { useNavigate, useParams } from "react-router-dom"
 import {
   ArrowLeft,
   Building2,
@@ -10,6 +11,7 @@ import {
 } from "lucide-react"
 
 import { api } from "@/lib/api"
+import { removeAdminTenant, setAdminTenantStatus } from "@/lib/api"
 import { useAppStore } from "@/store/appStore"
 import { DashboardLayout } from "@/components/layout/DashboardLayout"
 import { Button } from "@/components/ui/button"
@@ -44,6 +46,15 @@ export default function AdminTenantDetail() {
 
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
+  const queryClient = useQueryClient()
+  const statusMutation = useMutation({
+    mutationFn: (blocked: boolean) => setAdminTenantStatus(organizationId!, blocked),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["admin-tenants"] }); window.location.reload() },
+  })
+  const deleteMutation = useMutation({
+    mutationFn: () => removeAdminTenant(organizationId!),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["admin-tenants"] }); navigate("/admin", { replace: true }) },
+  })
 
   useEffect(() => {
     if (!organizationId) {
@@ -175,6 +186,19 @@ export default function AdminTenantDetail() {
               </div>
             )}
           </div>
+
+          {tenant && tenant.organizationStatus !== "DELETED" && (
+            <div className="mt-5 flex flex-wrap gap-3">
+              <Button variant="outline" disabled={statusMutation.isPending}
+                onClick={() => statusMutation.mutate(tenant.organizationStatus !== "BLOCKED")}>
+                {tenant.organizationStatus === "BLOCKED" ? "Unblock organization" : "Block organization"}
+              </Button>
+              <Button variant="outline" disabled={deleteMutation.isPending}
+                onClick={() => { if (window.confirm("Remove this organization? Its access will be revoked.")) deleteMutation.mutate() }}>
+                Remove organization
+              </Button>
+            </div>
+          )}
         </div>
 
         {/* Loading */}

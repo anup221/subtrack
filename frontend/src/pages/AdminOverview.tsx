@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react"
 import { useQuery } from "@tanstack/react-query"
+import { useNavigate } from "react-router-dom"
 import {
   Building2,
   DollarSign,
@@ -33,6 +34,7 @@ function initials(name: string) {
 
 export default function AdminOverview() {
   const [query, setQuery] = useState("")
+  const navigate = useNavigate()
 
   const {
     data: metrics,
@@ -224,6 +226,10 @@ export default function AdminOverview() {
 
             <div
               key={tenant.organizationId}
+              role="button"
+              tabIndex={0}
+              onClick={() => navigate(`/admin/tenants/${tenant.organizationId}`)}
+              onKeyDown={(event) => { if (event.key === "Enter") navigate(`/admin/tenants/${tenant.organizationId}`) }}
               className="grid gap-3 border-b border-[var(--st-border)] px-5 py-4 last:border-0 hover:bg-[var(--st-surface-hover)] md:grid-cols-[minmax(220px,2fr)_1fr_1fr_1fr] md:items-center"
             >
 

@@ -8,7 +8,7 @@ import {
   EyeOff,
 } from "lucide-react"
 
-import { login } from "@/lib/api"
+import { googleOrgLoginUrl, login } from "@/lib/api"
 import { useAppStore } from "@/store/appStore"
 
 import { Input } from "@/components/ui/input"
@@ -291,6 +291,10 @@ export default function LoginPage() {
                 )}
               </Button>
             </form>
+
+            <Button type="button" variant="outline" className="mt-3 w-full" onClick={() => { window.location.href = googleOrgLoginUrl() }}>
+              Continue with Google
+            </Button>
 
             {/* Signup */}
             <div className="mt-8 border-t border-[var(--st-border)] pt-6 text-center">

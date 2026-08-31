@@ -352,3 +352,11 @@ export async function verifyRazorpayPayment(payload: {
 
   return data
 }
+
+export async function setAdminTenantStatus(organizationId: string, blocked: boolean): Promise<void> {
+  await api.post(`/api/admin/tenants/${organizationId}/${blocked ? "block" : "unblock"}`)
+}
+
+export async function removeAdminTenant(organizationId: string): Promise<void> {
+  await api.delete(`/api/admin/tenants/${organizationId}`)
+}

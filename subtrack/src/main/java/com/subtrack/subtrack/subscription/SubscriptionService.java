@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.UUID;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -58,6 +59,7 @@ public class SubscriptionService {
         return toResponse(sub);
     }
 
+    @Transactional
     public ChangePlanResponse changePlan(
             ChangePlanRequest request
     ) {
@@ -90,18 +92,14 @@ public class SubscriptionService {
                                 )
                         );
 
-        SubscriptionStatus targetStatus =
-                sub.getStatus() == SubscriptionStatus.TRIAL
-                        ? SubscriptionStatus.ACTIVE
-                        : sub.getStatus();
-
-        if (sub.getStatus() != targetStatus
-                && !sub.getStatus().canTransitionTo(targetStatus)) {
-
-            throw new IllegalStateException(
-                    "Cannot change plan while subscription is "
-                            + sub.getStatus()
-            );
+        if (oldPlan.getId().equals(newPlan.getId())) {
+            throw new IllegalArgumentException("This is already your current plan");
+        }
+        if (sub.getStatus() == SubscriptionStatus.CANCELED) {
+            throw new IllegalStateException("A canceled subscription cannot change plans");
+        }
+        if (sub.getPendingPlanInvoiceId() != null) {
+            throw new IllegalStateException("A plan-change payment is already pending. Complete it before selecting another plan.");
         }
 
         int amountDueCents =
@@ -111,26 +109,22 @@ public class SubscriptionService {
                         newPlan
                 );
 
-        sub.setPlanId(newPlan.getId());
-        sub.setStatus(targetStatus);
-        sub.setUpdatedAt(Instant.now());
-
-        subscriptionRepository.save(sub);
-
+        // A downgrade (and a switch to Free) has no charge and is safe to apply
+        // immediately.  A paid upgrade is deliberately only staged here.
         InvoiceResponse upgradeInvoice = null;
-
-        if (amountDueCents > 0) {
-
-            upgradeInvoice =
-                    billingService.generateUpgradeInvoice(
-                            organizationId,
-                            sub.getId(),
-                            oldPlan,
-                            newPlan,
-                            amountDueCents,
-                            sub.getCurrentPeriodEnd()
-                    );
+        if (amountDueCents == 0) {
+            sub.setPlanId(newPlan.getId());
+            sub.setPendingPlanId(null);
+            sub.setPendingPlanInvoiceId(null);
+        } else {
+            upgradeInvoice = billingService.generateUpgradeInvoice(
+                    organizationId, sub.getId(), oldPlan, newPlan,
+                    amountDueCents, sub.getCurrentPeriodEnd());
+            sub.setPendingPlanId(newPlan.getId());
+            sub.setPendingPlanInvoiceId(upgradeInvoice.id());
         }
+        sub.setUpdatedAt(Instant.now());
+        subscriptionRepository.save(sub);
 
         return new ChangePlanResponse(
                 toResponse(sub),
@@ -228,6 +222,24 @@ public class SubscriptionService {
         subscriptionRepository.save(sub);
 
         return toResponse(sub);
+    }
+
+    /** Called only by the verified payment path, never by plan selection. */
+    @Transactional
+    public void activatePendingPlanForInvoice(UUID organizationId, UUID invoiceId) {
+        Subscription sub = subscriptionRepository.findByOrganizationId(organizationId)
+                .orElseThrow(() -> new IllegalStateException("No subscription found for this organization"));
+        if (!invoiceId.equals(sub.getPendingPlanInvoiceId()) || sub.getPendingPlanId() == null) {
+            return; // A recurring invoice must never change the selected plan.
+        }
+        sub.setPlanId(sub.getPendingPlanId());
+        sub.setPendingPlanId(null);
+        sub.setPendingPlanInvoiceId(null);
+        if (sub.getStatus() == SubscriptionStatus.TRIAL || sub.getStatus() == SubscriptionStatus.PAST_DUE) {
+            sub.setStatus(SubscriptionStatus.ACTIVE);
+        }
+        sub.setUpdatedAt(Instant.now());
+        subscriptionRepository.save(sub);
     }
 
     /**

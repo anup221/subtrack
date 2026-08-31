@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils"
-import {
+import type {
   InputHTMLAttributes,
   LabelHTMLAttributes,
 } from "react"

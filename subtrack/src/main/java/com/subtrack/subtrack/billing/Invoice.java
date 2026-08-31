@@ -7,6 +7,7 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -41,6 +42,21 @@ public class Invoice {
 
     @Column(name = "total_cents", nullable = false)
     private int totalCents;
+
+    @Column(name = "invoice_type", nullable = false)
+    private String invoiceType = "RECURRING";
+
+    @Column(name = "target_plan_id")
+    private UUID targetPlanId;
+
+    @Column(name = "gateway_order_id")
+    private String gatewayOrderId;
+
+    @Column(name = "gateway_order_created_at")
+    private Instant gatewayOrderCreatedAt;
+
+    @Version
+    private long version;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt = Instant.now();

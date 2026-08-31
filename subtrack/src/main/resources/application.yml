@@ -1,6 +1,10 @@
 spring:
   application:
     name: subtrack
+  profiles:
+    # Runs application-local.yml on developer machines. Production must set
+    # SPRING_PROFILES_ACTIVE=prod and supplies all secrets as environment vars.
+    default: local
 
   datasource:
     url: jdbc:postgresql://localhost:5432/subtrack
@@ -32,8 +36,8 @@ spring:
 
           # Organization / Owner Google login
           google-org:
-            client-id: "298263542317-s7hkt4f0fgfq1uhial2veeqnt9nnfpi7.apps.googleusercontent.com"
-            client-secret: "GOCSPX-1H7gzE_mWAI_5BzMsB-MHPIQ06D"
+            client-id: "${GOOGLE_ORG_CLIENT_ID}"
+            client-secret: "${GOOGLE_ORG_CLIENT_SECRET}"
             authorization-grant-type: authorization_code
             scope:
               - email
@@ -43,8 +47,8 @@ spring:
 
           # Platform Admin Google login
           google-admin:
-            client-id: "298263542317-s7hkt4f0fgfq1uhial2veeqnt9nnfpi7.apps.googleusercontent.com"
-            client-secret: "GOCSPX-1H7gzE_mWAI_5BzMsB-MHPIQ06D"
+            client-id: "${GOOGLE_ADMIN_CLIENT_ID:${GOOGLE_ORG_CLIENT_ID}}"
+            client-secret: "${GOOGLE_ADMIN_CLIENT_SECRET:${GOOGLE_ORG_CLIENT_SECRET}}"
             authorization-grant-type: authorization_code
             scope:
               - email
@@ -68,13 +72,16 @@ spring:
             user-info-uri: https://www.googleapis.com/oauth2/v3/userinfo
             user-name-attribute: email
 
+app:
+  frontend-url: "${FRONTEND_URL:http://localhost:5173}"
+
 
 # --------------------------------------------------
 # JWT
 # --------------------------------------------------
 
 jwt:
-  secret: "replace-this-with-a-long-random-string-at-least-32-chars-for-hs256"
+  secret: "${JWT_SECRET}"
   expiration-ms: 86400000
 
 
@@ -91,7 +98,7 @@ admin:
 # --------------------------------------------------
 
 webhook:
-  secret: "dev-webhook-shared-secret-change-in-prod"
+  secret: "${WEBHOOK_SECRET}"
 
 
 # --------------------------------------------------
@@ -99,8 +106,8 @@ webhook:
 # --------------------------------------------------
 
 razorpay:
-  key-id: "rzp_test_TVzjLsAJRjEm3d"
-  key-secret: "uqJLWCICpj98PPV7IjdsdeUI"
+  key-id: "${RAZORPAY_KEY_ID}"
+  key-secret: "${RAZORPAY_KEY_SECRET}"
   webhook-secret: "${RAZORPAY_WEBHOOK_SECRET:not-set-up-yet}"
 
 

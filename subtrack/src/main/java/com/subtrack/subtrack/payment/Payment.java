@@ -42,6 +42,9 @@ public class Payment {
     @Column(name = "gateway_reference")
     private String gatewayReference;
 
+    @Column(name = "gateway_order_id")
+    private String gatewayOrderId;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt = Instant.now();
 

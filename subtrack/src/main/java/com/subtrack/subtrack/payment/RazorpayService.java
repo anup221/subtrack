@@ -10,11 +10,13 @@ import com.subtrack.subtrack.payment.dto.PaymentResponse;
 import com.subtrack.subtrack.payment.dto.VerifyPaymentRequest;
 import com.subtrack.subtrack.subscription.Subscription;
 import com.subtrack.subtrack.subscription.SubscriptionRepository;
+import com.subtrack.subtrack.subscription.SubscriptionService;
 import com.subtrack.subtrack.tenant.TenantContext;
 import lombok.RequiredArgsConstructor;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
@@ -27,10 +29,12 @@ public class RazorpayService {
     private final PaymentRepository paymentRepository;
     private final DunningService dunningService;
     private final SubscriptionRepository subscriptionRepository;
+    private final SubscriptionService subscriptionService;
 
     @Value("${razorpay.key-id}")
     private String keyId;
 
+    @Transactional
     public CreateOrderResponse createOrder(UUID invoiceId) throws Exception {
         UUID organizationId = TenantContext.get();
 
@@ -39,6 +43,15 @@ public class RazorpayService {
 
         if (!invoice.getOrganizationId().equals(organizationId)) {
             throw new IllegalStateException("Invoice not found");
+        }
+        if (invoice.getStatus() != InvoiceStatus.PENDING || invoice.getTotalCents() <= 0) {
+            throw new IllegalStateException("Only a positive, pending invoice can be paid");
+        }
+
+        // Reopening checkout must reuse the same gateway order.  This prevents
+        // duplicate orders and makes the callback verifiably belong to this invoice.
+        if (invoice.getGatewayOrderId() != null) {
+            return new CreateOrderResponse(invoice.getGatewayOrderId(), invoice.getTotalCents(), "INR", keyId, invoice.getId());
         }
 
         JSONObject orderRequest = new JSONObject();
@@ -58,8 +71,12 @@ public class RazorpayService {
         com.razorpay.Order order =
                 razorpayClient.orders.create(orderRequest);
 
+        invoice.setGatewayOrderId(order.get("id"));
+        invoice.setGatewayOrderCreatedAt(java.time.Instant.now());
+        invoiceRepository.save(invoice);
+
         return new CreateOrderResponse(
-                order.get("id"),
+                invoice.getGatewayOrderId(),
                 invoice.getTotalCents(),
                 "INR",
                 keyId,
@@ -67,6 +84,7 @@ public class RazorpayService {
         );
     }
 
+    @Transactional
     public PaymentResponse verifyAndRecordPayment(
             VerifyPaymentRequest request
     ) throws Exception {
@@ -78,6 +96,16 @@ public class RazorpayService {
 
         if (!invoice.getOrganizationId().equals(organizationId)) {
             throw new IllegalStateException("Invoice not found");
+        }
+        if (!request.razorpayOrderId().equals(invoice.getGatewayOrderId())) {
+            throw new IllegalStateException("The payment order does not belong to this invoice");
+        }
+        Payment recorded = paymentRepository.findByGatewayReference(request.razorpayPaymentId()).orElse(null);
+        if (recorded != null) {
+            if (!recorded.getInvoiceId().equals(invoice.getId())) {
+                throw new IllegalStateException("This gateway payment is already attached to another invoice");
+            }
+            return toResponse(recorded);
         }
 
         JSONObject verifyPayload = new JSONObject();
@@ -112,11 +140,13 @@ public class RazorpayService {
         payment.setAmountCents(invoice.getTotalCents());
         payment.setAttemptNumber(attemptNumber);
         payment.setGatewayReference(request.razorpayPaymentId());
+        payment.setGatewayOrderId(request.razorpayOrderId());
 
         if (isValid) {
 
             payment.setStatus(PaymentStatus.SUCCEEDED);
             invoice.setStatus(InvoiceStatus.PAID);
+            subscriptionService.activatePendingPlanForInvoice(organizationId, invoice.getId());
 
             // Save the payment method for potential future autopay use
             Subscription sub =
@@ -162,14 +192,12 @@ public class RazorpayService {
             );
         }
 
-        return new PaymentResponse(
-                payment.getId(),
-                payment.getInvoiceId(),
-                payment.getAmountCents(),
-                payment.getStatus().name(),
-                payment.getAttemptNumber(),
-                payment.getCreatedAt()
-        );
+        return toResponse(payment);
+    }
+
+    private PaymentResponse toResponse(Payment payment) {
+        return new PaymentResponse(payment.getId(), payment.getInvoiceId(), payment.getAmountCents(),
+                payment.getStatus().name(), payment.getAttemptNumber(), payment.getCreatedAt());
     }
 
     // Signature verification needs the raw key secret,

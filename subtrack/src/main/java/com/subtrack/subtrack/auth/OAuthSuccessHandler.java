@@ -41,13 +41,16 @@ public class OAuthSuccessHandler implements AuthenticationSuccessHandler {
         String registrationId = extractRegistrationId(request);
 
         String token;
+        boolean isAdmin;
         if ("google-admin".equals(registrationId)) {
             token = handleAdminLogin(email);
+            isAdmin = true;
         } else {
             token = handleOrgLogin(email);
+            isAdmin = false;
         }
 
-        response.sendRedirect(frontendUrl + "/oauth-complete?token=" + token);
+        response.sendRedirect(frontendUrl + "/oauth-complete?token=" + token + "&type=" + (isAdmin ? "admin" : "organization"));
     }
 
     private String handleAdminLogin(String email) {

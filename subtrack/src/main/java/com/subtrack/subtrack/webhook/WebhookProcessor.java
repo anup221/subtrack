@@ -7,6 +7,7 @@ import com.subtrack.subtrack.payment.DunningService;
 import com.subtrack.subtrack.payment.Payment;
 import com.subtrack.subtrack.payment.PaymentRepository;
 import com.subtrack.subtrack.payment.PaymentStatus;
+import com.subtrack.subtrack.subscription.SubscriptionService;
 import com.subtrack.subtrack.webhook.dto.WebhookPayload;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -22,6 +23,7 @@ public class WebhookProcessor {
     private final PaymentRepository paymentRepository;
     private final InvoiceRepository invoiceRepository;
     private final DunningService dunningService;
+    private final SubscriptionService subscriptionService;
 
     public void process(WebhookPayload payload, String rawJson) {
         if (idempotencyService.alreadyProcessed(payload.eventId())) {
@@ -50,6 +52,7 @@ public class WebhookProcessor {
 
             invoice.setStatus(InvoiceStatus.PAID);
             invoiceRepository.save(invoice);
+            subscriptionService.activatePendingPlanForInvoice(invoice.getOrganizationId(), invoice.getId());
 
         } else if ("payment.failed".equals(payload.eventType())) {
             payment.setStatus(PaymentStatus.FAILED);

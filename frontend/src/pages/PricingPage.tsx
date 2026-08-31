@@ -46,12 +46,8 @@ export default function PricingPage() {
         queryKey: ["subscription"],
       })
 
-      await queryClient.refetchQueries({
-        queryKey: ["plans"],
-      })
-
       if (result.upgradeInvoice) {
-        navigate("/billing")
+        navigate(`/billing?invoice=${result.upgradeInvoice.id}`)
       } else {
         navigate("/dashboard")
       }
@@ -98,7 +94,7 @@ export default function PricingPage() {
 
             <div>
               <p className="text-sm font-medium text-[var(--st-text)]">
-                Your plan has been updated.
+                Your upgrade is ready for payment.
               </p>
 
               <p className="mt-1 text-sm text-[var(--st-text-muted)]">
@@ -109,7 +105,7 @@ export default function PricingPage() {
                     mutation.data.upgradeInvoice.totalCents / 100
                   ).toFixed(2)}
                 </span>{" "}
-                is waiting on Billing.
+                will be charged after checkout; your current plan remains active until then.
               </p>
             </div>
 

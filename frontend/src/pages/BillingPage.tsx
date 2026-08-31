@@ -1,13 +1,12 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
+import { useSearchParams } from "react-router-dom"
 
 import {
-  useMutation,
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query"
 
 import {
-  ArrowUpRight,
   ChevronRight,
   CreditCard,
   FileText,
@@ -17,10 +16,8 @@ import {
 
 import {
   createRazorpayOrder,
-  generateInvoice,
   getInvoices,
   getPayments,
-  payInvoice,
   verifyRazorpayPayment,
   type Invoice,
 } from "@/lib/api"
@@ -36,6 +33,7 @@ import {
 
 export default function BillingPage() {
   const queryClient = useQueryClient()
+  const [searchParams] = useSearchParams()
 
   const [selected, setSelected] =
     useState<Invoice | null>(null)
@@ -65,35 +63,12 @@ export default function BillingPage() {
     enabled: !!selected,
   })
 
-  const generateMutation =
-    useMutation({
-      mutationFn: generateInvoice,
-
-      onSuccess: () => {
-        queryClient.invalidateQueries({
-          queryKey: ["invoices"],
-        })
-      },
-    })
-
-  const payMutation =
-    useMutation({
-      mutationFn: payInvoice,
-
-      onSuccess: () => {
-        queryClient.invalidateQueries({
-          queryKey: ["invoices"],
-        })
-
-        queryClient.invalidateQueries({
-          queryKey: ["payments"],
-        })
-
-        queryClient.invalidateQueries({
-          queryKey: ["subscription"],
-        })
-      },
-    })
+  useEffect(() => {
+    const requestedInvoice = searchParams.get("invoice")
+    if (requestedInvoice && invoices) {
+      setSelected(invoices.find((invoice) => invoice.id === requestedInvoice) ?? null)
+    }
+  }, [invoices, searchParams])
 
   async function payWithRazorpay(
     invoiceId: string
@@ -208,23 +183,6 @@ export default function BillingPage() {
         eyebrow="Invoicing"
         title="Billing"
         description="Invoices and payment history for your organization only."
-        actions={
-          <Button
-            onClick={() =>
-              generateMutation.mutate()
-            }
-            disabled={
-              generateMutation.isPending
-            }
-            className="gap-2"
-          >
-            <Receipt size={16} />
-
-            {generateMutation.isPending
-              ? "Generating..."
-              : "Generate invoice"}
-          </Button>
-        }
       />
 
       {/* --------------------------------
@@ -246,23 +204,8 @@ export default function BillingPage() {
             </p>
 
             <p className="mt-2 max-w-sm text-sm leading-6 text-[var(--text-muted)]">
-              Generate an invoice to start
-              the billing and payment flow.
+              Paid plan changes and recurring billing invoices will appear here.
             </p>
-
-            <Button
-              className="mt-6"
-              onClick={() =>
-                generateMutation.mutate()
-              }
-              disabled={
-                generateMutation.isPending
-              }
-            >
-              {generateMutation.isPending
-                ? "Generating..."
-                : "Generate invoice"}
-            </Button>
           </div>
         </Card>
       )}
@@ -466,26 +409,6 @@ export default function BillingPage() {
                             <div className="flex flex-wrap justify-end gap-2">
                               <Button
                                 size="sm"
-                                onClick={() =>
-                                  payMutation.mutate(
-                                    invoice.id
-                                  )
-                                }
-                                disabled={
-                                  payMutation.isPending
-                                }
-                              >
-                                <CreditCard
-                                  size={14}
-                                />
-
-                                {payMutation.isPending
-                                  ? "Charging..."
-                                  : "Pay now"}
-                              </Button>
-
-                              <Button
-                                size="sm"
                                 variant="outline"
                                 onClick={() =>
                                   payWithRazorpay(
@@ -525,7 +448,6 @@ export default function BillingPage() {
 
       {selected && (
         <Card
-          feature
           className="overflow-hidden border-[var(--border)] bg-[var(--surface)] p-0"
         >
           {/* DETAIL HEADER */}
