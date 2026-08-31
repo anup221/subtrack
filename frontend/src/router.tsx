@@ -1,43 +1,144 @@
 import { createBrowserRouter, Navigate } from "react-router-dom"
 import type { ReactNode } from "react"
+
 import App from "@/App"
+
 import LoginPage from "@/pages/LoginPage"
 import SignupPage from "@/pages/SignupPage"
+import AdminLoginPage from "@/pages/AdminLoginPage"
+import OAuthCompletePage from "@/pages/OAuthCompletePage"
+
 import PricingPage from "@/pages/PricingPage"
 import DashboardHome from "@/pages/DashboardHome"
 import UsagePage from "@/pages/UsagePage"
 import BillingPage from "@/pages/BillingPage"
 import AdminOverview from "@/pages/AdminOverview"
+import AdminTenantDetail from "@/pages/AdminTenantDetail"
 import OrganizationPage from "@/pages/OrganizationPage"
+
 import { DashboardLayout } from "@/components/layout/DashboardLayout"
 import { useAppStore } from "@/store/appStore"
 
+
+/* ============================================================
+   ORGANIZATION / USER ROUTE
+============================================================ */
+
 function ProtectedRoute({ children }: { children: ReactNode }) {
   const token = useAppStore((s) => s.token)
-  if (!token) return <Navigate to="/login" replace />
+  const isPlatformAdmin = useAppStore((s) => s.isPlatformAdmin)
+
+  if (!token) {
+    return <Navigate to="/login" replace />
+  }
+
+  /*
+   * Platform admins belong to the platform admin console,
+   * not an organization dashboard.
+   */
+  if (isPlatformAdmin) {
+    return <Navigate to="/admin" replace />
+  }
+
   return <DashboardLayout>{children}</DashboardLayout>
 }
+
+
+/* ============================================================
+   ORGANIZATION OWNER ROUTE
+============================================================ */
 
 function OwnerRoute({ children }: { children: ReactNode }) {
   const token = useAppStore((s) => s.token)
   const role = useAppStore((s) => s.role)
-  if (!token) return <Navigate to="/login" replace />
-  if (role !== "OWNER" && role !== "ADMIN") return <Navigate to="/dashboard" replace />
+  const isPlatformAdmin = useAppStore((s) => s.isPlatformAdmin)
+
+  if (!token) {
+    return <Navigate to="/login" replace />
+  }
+
+  /*
+   * Platform admins use the separate admin console.
+   */
+  if (isPlatformAdmin) {
+    return <Navigate to="/admin" replace />
+  }
+
+  /*
+   * Only organization owners/admins can access
+   * organization management.
+   */
+  if (role !== "OWNER" && role !== "ADMIN") {
+    return <Navigate to="/dashboard" replace />
+  }
+
   return <DashboardLayout>{children}</DashboardLayout>
 }
+
+
+/* ============================================================
+   PLATFORM ADMIN ROUTE
+============================================================ */
 
 function AdminRoute({ children }: { children: ReactNode }) {
   const token = useAppStore((s) => s.token)
-  const role = useAppStore((s) => s.role)
-  if (!token) return <Navigate to="/login" replace />
-  if (role !== "OWNER" && role !== "ADMIN") return <Navigate to="/dashboard" replace />
+  const isPlatformAdmin = useAppStore((s) => s.isPlatformAdmin)
+
+  if (!token) {
+    return <Navigate to="/admin/login" replace />
+  }
+
+  /*
+   * Only a PLATFORM_ADMIN session can access
+   * the platform administration area.
+   */
+  if (!isPlatformAdmin) {
+    return <Navigate to="/dashboard" replace />
+  }
+
   return <DashboardLayout>{children}</DashboardLayout>
 }
 
+
+/* ============================================================
+   ROUTER
+============================================================ */
+
 export const router = createBrowserRouter([
-  { path: "/", element: <App /> },
-  { path: "/login", element: <LoginPage /> },
-  { path: "/signup", element: <SignupPage /> },
+  /* ==========================================================
+     PUBLIC
+  ========================================================== */
+
+  {
+    path: "/",
+    element: <App />,
+  },
+
+  {
+    path: "/login",
+    element: <LoginPage />,
+  },
+
+  {
+    path: "/signup",
+    element: <SignupPage />,
+  },
+
+  {
+    path: "/admin/login",
+    element: <AdminLoginPage />,
+  },
+
+  {
+    path: "/oauth-complete",
+    element: <OAuthCompletePage />,
+  },
+
+
+  /* ==========================================================
+     ORGANIZATION DASHBOARD
+  ========================================================== */
+
   {
     path: "/dashboard",
     element: (
@@ -46,6 +147,7 @@ export const router = createBrowserRouter([
       </ProtectedRoute>
     ),
   },
+
   {
     path: "/pricing",
     element: (
@@ -54,6 +156,7 @@ export const router = createBrowserRouter([
       </ProtectedRoute>
     ),
   },
+
   {
     path: "/usage",
     element: (
@@ -62,6 +165,7 @@ export const router = createBrowserRouter([
       </ProtectedRoute>
     ),
   },
+
   {
     path: "/billing",
     element: (
@@ -70,6 +174,12 @@ export const router = createBrowserRouter([
       </ProtectedRoute>
     ),
   },
+
+
+  /* ==========================================================
+     ORGANIZATION OWNER CONSOLE
+  ========================================================== */
+
   {
     path: "/organization",
     element: (
@@ -78,11 +188,26 @@ export const router = createBrowserRouter([
       </OwnerRoute>
     ),
   },
+
+
+  /* ==========================================================
+     PLATFORM ADMIN
+  ========================================================== */
+
   {
     path: "/admin",
     element: (
       <AdminRoute>
         <AdminOverview />
+      </AdminRoute>
+    ),
+  },
+
+  {
+    path: "/admin/tenants/:organizationId",
+    element: (
+      <AdminRoute>
+        <AdminTenantDetail />
       </AdminRoute>
     ),
   },

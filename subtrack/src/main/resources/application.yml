@@ -1,33 +1,112 @@
 spring:
   application:
     name: subtrack
+
   datasource:
     url: jdbc:postgresql://localhost:5432/subtrack
     username: subtrack
     password: subtrack
+
   jpa:
     hibernate:
-      ddl-auto: validate   # Flyway owns the schema, not Hibernate
+      ddl-auto: validate
     show-sql: true
+
   flyway:
     enabled: true
     locations: classpath:db/migration
+
   data:
     redis:
       host: localhost
       port: 6379
 
+  # --------------------------------------------------
+  # Google OAuth2
+  # --------------------------------------------------
+
+  security:
+    oauth2:
+      client:
+        registration:
+
+          # Organization / Owner Google login
+          google-org:
+            client-id: "298263542317-s7hkt4f0fgfq1uhial2veeqnt9nnfpi7.apps.googleusercontent.com"
+            client-secret: "GOCSPX-1H7gzE_mWAI_5BzMsB-MHPIQ06D"
+            authorization-grant-type: authorization_code
+            scope:
+              - email
+              - profile
+            redirect-uri: "{baseUrl}/login/oauth2/code/google-org"
+            provider: google-org
+
+          # Platform Admin Google login
+          google-admin:
+            client-id: "298263542317-s7hkt4f0fgfq1uhial2veeqnt9nnfpi7.apps.googleusercontent.com"
+            client-secret: "GOCSPX-1H7gzE_mWAI_5BzMsB-MHPIQ06D"
+            authorization-grant-type: authorization_code
+            scope:
+              - email
+              - profile
+            redirect-uri: "{baseUrl}/login/oauth2/code/google-admin"
+            provider: google-admin
+
+        provider:
+
+          # Google provider for organization users
+          google-org:
+            authorization-uri: https://accounts.google.com/o/oauth2/v2/auth
+            token-uri: https://oauth2.googleapis.com/token
+            user-info-uri: https://www.googleapis.com/oauth2/v3/userinfo
+            user-name-attribute: email
+
+          # Google provider for platform admins
+          google-admin:
+            authorization-uri: https://accounts.google.com/o/oauth2/v2/auth
+            token-uri: https://oauth2.googleapis.com/token
+            user-info-uri: https://www.googleapis.com/oauth2/v3/userinfo
+            user-name-attribute: email
+
+
+# --------------------------------------------------
+# JWT
+# --------------------------------------------------
+
 jwt:
   secret: "replace-this-with-a-long-random-string-at-least-32-chars-for-hs256"
-  expiration-ms: 86400000   # 24 hours
+  expiration-ms: 86400000
+
+
+# --------------------------------------------------
+# Platform Admin
+# --------------------------------------------------
+
+admin:
+  bootstrap-code: "${ADMIN_BOOTSTRAP_CODE:change-this-to-something-only-you-know}"
+
+
+# --------------------------------------------------
+# Webhooks
+# --------------------------------------------------
 
 webhook:
   secret: "dev-webhook-shared-secret-change-in-prod"
 
+
+# --------------------------------------------------
+# Razorpay
+# --------------------------------------------------
+
 razorpay:
   key-id: "rzp_test_TVzjLsAJRjEm3d"
   key-secret: "uqJLWCICpj98PPV7IjdsdeUI"
-  webhook-secret: "not-set-up-yet"
+  webhook-secret: "${RAZORPAY_WEBHOOK_SECRET:not-set-up-yet}"
+
+
+# --------------------------------------------------
+# Server
+# --------------------------------------------------
 
 server:
   port: 8080

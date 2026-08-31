@@ -22,20 +22,75 @@ public class JwtService {
     private long expirationMs;
 
     private SecretKey key() {
-        return Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+        return Keys.hmacShaKeyFor(
+                secret.getBytes(StandardCharsets.UTF_8)
+        );
     }
 
+    /**
+     * Generates a JWT for a normal organization user.
+     *
+     * The token contains:
+     * - email
+     * - organizationId
+     * - role
+     */
     public String generateToken(User user) {
         return Jwts.builder()
                 .subject(user.getEmail())
-                .claim("organizationId", user.getOrganizationId().toString())
-                .claim("role", user.getRole().name())
+                .claim(
+                        "organizationId",
+                        user.getOrganizationId().toString()
+                )
+                .claim(
+                        "role",
+                        user.getRole().name()
+                )
                 .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + expirationMs))
+                .expiration(
+                        new Date(
+                                System.currentTimeMillis()
+                                        + expirationMs
+                        )
+                )
                 .signWith(key())
                 .compact();
     }
 
+    /**
+     * Generates a JWT for a platform administrator.
+     *
+     * IMPORTANT:
+     * Admin tokens intentionally do NOT contain an
+     * organizationId claim.
+     *
+     * JwtAuthFilter can therefore distinguish:
+     *
+     * Organization user:
+     *   organizationId = present
+     *
+     * Platform admin:
+     *   organizationId = absent
+     *   userType = PLATFORM_ADMIN
+     */
+    public String generateAdminToken(String email) {
+        return Jwts.builder()
+                .subject(email)
+                .claim("userType", "PLATFORM_ADMIN")
+                .issuedAt(new Date())
+                .expiration(
+                        new Date(
+                                System.currentTimeMillis()
+                                        + expirationMs
+                        )
+                )
+                .signWith(key())
+                .compact();
+    }
+
+    /**
+     * Parses and validates a JWT.
+     */
     public Claims parseClaims(String token) {
         return Jwts.parser()
                 .verifyWith(key())
@@ -44,6 +99,9 @@ public class JwtService {
                 .getPayload();
     }
 
+    /**
+     * Checks whether a JWT is valid.
+     */
     public boolean isValid(String token) {
         try {
             parseClaims(token);

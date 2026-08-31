@@ -11,6 +11,8 @@ public record SubscriptionResponse(
         PlanResponse plan,
         String status,
         Instant currentPeriodStart,
-        Instant currentPeriodEnd
+        Instant currentPeriodEnd,
+        Instant nextBillingDate,
+        boolean autopayEnabled
 ) {
 }

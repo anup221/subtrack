@@ -12,7 +12,6 @@ import {
   LayoutDashboard,
   CreditCard,
   BarChart3,
-  Users,
   LogOut,
   ArrowUpRight,
   Building2,
@@ -66,10 +65,6 @@ export function DashboardLayout({
   const [open, setOpen] = useState(false)
 
   const canSeeOrg =
-    role === "OWNER" ||
-    role === "ADMIN"
-
-  const canSeeAdmin =
     role === "OWNER" ||
     role === "ADMIN"
 
@@ -166,6 +161,7 @@ export function DashboardLayout({
       {/* Navigation */}
       <nav className="flex-1 space-y-8">
 
+        {/* Workspace */}
         <div>
           <p className="eyebrow mb-2 px-3">
             Workspace
@@ -181,6 +177,7 @@ export function DashboardLayout({
           </div>
         </div>
 
+        {/* Organization */}
         {canSeeOrg && (
           <div>
             <p className="eyebrow mb-2 px-3">
@@ -191,20 +188,6 @@ export function DashboardLayout({
               path="/organization"
               label="Owner console"
               icon={Building2}
-            />
-          </div>
-        )}
-
-        {canSeeAdmin && (
-          <div>
-            <p className="eyebrow mb-2 px-3">
-              Platform
-            </p>
-
-            <NavButton
-              path="/admin"
-              label="Admin console"
-              icon={Users}
             />
           </div>
         )}

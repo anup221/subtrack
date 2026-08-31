@@ -8,13 +8,14 @@ import com.subtrack.subtrack.billing.InvoiceStatus;
 import com.subtrack.subtrack.payment.dto.CreateOrderResponse;
 import com.subtrack.subtrack.payment.dto.PaymentResponse;
 import com.subtrack.subtrack.payment.dto.VerifyPaymentRequest;
+import com.subtrack.subtrack.subscription.Subscription;
+import com.subtrack.subtrack.subscription.SubscriptionRepository;
 import com.subtrack.subtrack.tenant.TenantContext;
 import lombok.RequiredArgsConstructor;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.time.Instant;
 import java.util.UUID;
 
 @Service
@@ -25,6 +26,7 @@ public class RazorpayService {
     private final InvoiceRepository invoiceRepository;
     private final PaymentRepository paymentRepository;
     private final DunningService dunningService;
+    private final SubscriptionRepository subscriptionRepository;
 
     @Value("${razorpay.key-id}")
     private String keyId;
@@ -40,11 +42,21 @@ public class RazorpayService {
         }
 
         JSONObject orderRequest = new JSONObject();
-        orderRequest.put("amount", invoice.getTotalCents()); // Razorpay expects the smallest currency unit (paise for INR) — cents work the same way
-        orderRequest.put("currency", "INR");
-        orderRequest.put("receipt", invoice.getId().toString());
+        orderRequest.put(
+                "amount",
+                invoice.getTotalCents()
+        );
+        orderRequest.put(
+                "currency",
+                "INR"
+        );
+        orderRequest.put(
+                "receipt",
+                invoice.getId().toString()
+        );
 
-        com.razorpay.Order order = razorpayClient.orders.create(orderRequest);
+        com.razorpay.Order order =
+                razorpayClient.orders.create(orderRequest);
 
         return new CreateOrderResponse(
                 order.get("id"),
@@ -55,7 +67,10 @@ public class RazorpayService {
         );
     }
 
-    public PaymentResponse verifyAndRecordPayment(VerifyPaymentRequest request) throws Exception {
+    public PaymentResponse verifyAndRecordPayment(
+            VerifyPaymentRequest request
+    ) throws Exception {
+
         UUID organizationId = TenantContext.get();
 
         Invoice invoice = invoiceRepository.findById(request.invoiceId())
@@ -66,15 +81,32 @@ public class RazorpayService {
         }
 
         JSONObject verifyPayload = new JSONObject();
-        verifyPayload.put("razorpay_order_id", request.razorpayOrderId());
-        verifyPayload.put("razorpay_payment_id", request.razorpayPaymentId());
-        verifyPayload.put("razorpay_signature", request.razorpaySignature());
 
-        boolean isValid = Utils.verifyPaymentSignature(verifyPayload, keySecretForVerification());
+        verifyPayload.put(
+                "razorpay_order_id",
+                request.razorpayOrderId()
+        );
 
-        int attemptNumber = paymentRepository.countByInvoiceId(invoice.getId()) + 1;
+        verifyPayload.put(
+                "razorpay_payment_id",
+                request.razorpayPaymentId()
+        );
+
+        verifyPayload.put(
+                "razorpay_signature",
+                request.razorpaySignature()
+        );
+
+        boolean isValid = Utils.verifyPaymentSignature(
+                verifyPayload,
+                keySecretForVerification()
+        );
+
+        int attemptNumber =
+                paymentRepository.countByInvoiceId(invoice.getId()) + 1;
 
         Payment payment = new Payment();
+
         payment.setInvoiceId(invoice.getId());
         payment.setOrganizationId(organizationId);
         payment.setAmountCents(invoice.getTotalCents());
@@ -82,9 +114,40 @@ public class RazorpayService {
         payment.setGatewayReference(request.razorpayPaymentId());
 
         if (isValid) {
+
             payment.setStatus(PaymentStatus.SUCCEEDED);
             invoice.setStatus(InvoiceStatus.PAID);
+
+            // Save the payment method for potential future autopay use
+            Subscription sub =
+                    subscriptionRepository
+                            .findByOrganizationId(organizationId)
+                            .orElse(null);
+
+            if (sub != null) {
+
+                com.razorpay.Payment razorpayPayment =
+                        razorpayClient.payments.fetch(
+                                request.razorpayPaymentId()
+                        );
+
+                String customerId =
+                        razorpayPayment.get("customer_id");
+
+                String token =
+                        razorpayPayment.get("token_id");
+
+                if (customerId != null && token != null) {
+
+                    sub.setGatewayCustomerId(customerId);
+                    sub.setGatewayPaymentToken(token);
+
+                    subscriptionRepository.save(sub);
+                }
+            }
+
         } else {
+
             payment.setStatus(PaymentStatus.FAILED);
             invoice.setStatus(InvoiceStatus.FAILED);
         }
@@ -93,7 +156,10 @@ public class RazorpayService {
         invoiceRepository.save(invoice);
 
         if (!isValid) {
-            dunningService.handleFailedPayment(invoice.getId(), attemptNumber);
+            dunningService.handleFailedPayment(
+                    invoice.getId(),
+                    attemptNumber
+            );
         }
 
         return new PaymentResponse(
@@ -106,7 +172,8 @@ public class RazorpayService {
         );
     }
 
-    // Signature verification needs the raw key secret, not the RazorpayClient object — injected separately.
+    // Signature verification needs the raw key secret,
+    // not the RazorpayClient object — injected separately.
     @Value("${razorpay.key-secret}")
     private String keySecretForVerification;
 

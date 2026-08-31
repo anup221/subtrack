@@ -39,6 +39,18 @@ public class Subscription {
     @Column(name = "current_period_end", nullable = false)
     private Instant currentPeriodEnd;
 
+    @Column(name = "next_billing_date")
+    private Instant nextBillingDate;
+
+    @Column(name = "autopay_enabled", nullable = false)
+    private boolean autopayEnabled = false;
+
+    @Column(name = "gateway_customer_id")
+    private String gatewayCustomerId;
+
+    @Column(name = "gateway_payment_token")
+    private String gatewayPaymentToken;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt = Instant.now();
 
