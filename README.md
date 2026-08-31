@@ -135,3 +135,32 @@ The project focuses heavily on backend engineering and real-world SaaS architect
        │ Invoices       │ │                │ │                │
        │ Payments       │ │                │ │                │
        └────────────────┘ └────────────────┘ └────────────────┘
+## 📸 Screenshots
+
+### Landing Page
+
+![SubTrack Landing Page](assets/screenshots/landing-page.png)
+
+### Login
+
+![SubTrack Login](assets/screenshots/login.png)
+
+### Dashboard
+
+![SubTrack Dashboard](assets/screenshots/dashboard.png)
+
+### Plans
+
+![SubTrack Plans](assets/screenshots/plans.png)
+
+### Usage & Metering
+
+![SubTrack Usage](assets/screenshots/usage-meter.png)
+
+### Billing & Invoices
+
+![SubTrack Billing](assets/screenshots/invoice.png)
+
+### Razorpay Payment
+
+![Razorpay Payment](assets/screenshots/razorpay.png)
