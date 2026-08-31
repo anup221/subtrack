@@ -1,11 +1,37 @@
 import { cn } from "@/lib/utils"
-import { InputHTMLAttributes } from "react"
+import {
+  InputHTMLAttributes,
+  LabelHTMLAttributes,
+} from "react"
 
-export function Input({ className, ...props }: InputHTMLAttributes<HTMLInputElement>) {
+export function Label({
+  className,
+  ...props
+}: LabelHTMLAttributes<HTMLLabelElement>) {
+  return (
+    <label
+      className={cn("eyebrow mb-1.5 block", className)}
+      {...props}
+    />
+  )
+}
+
+export function Input({
+  className,
+  ...props
+}: InputHTMLAttributes<HTMLInputElement>) {
   return (
     <input
       className={cn(
-        "w-full rounded-lg border border-[#262633] bg-black/35 px-3 py-2.5 text-sm text-white placeholder:text-[#5c5c6b] transition-colors focus:border-[#7c5cff]/50 focus:outline-none focus:ring-2 focus:ring-[#7c5cff]/40",
+        "w-full rounded-[var(--radius)] border border-[var(--border-strong)]",
+        "bg-[var(--surface)] px-3.5 py-2.5 text-sm text-[var(--text)]",
+        "placeholder:text-[var(--text-faint)]",
+        "transition-colors",
+        "focus:border-[var(--text-faint)]",
+        "focus:outline-none",
+        "focus-visible:outline-2",
+        "focus-visible:outline-[var(--ring)]",
+        "focus-visible:outline-offset-1",
         className
       )}
       {...props}

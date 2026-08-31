@@ -1,18 +1,31 @@
 import { useMemo, useState } from "react"
 import { useQuery } from "@tanstack/react-query"
-import { motion } from "framer-motion"
-import { Building2, DollarSign, Search, TrendingDown, Users } from "lucide-react"
-import { getAdminMetrics, getAdminTenants } from "@/lib/api"
+import {
+  Building2,
+  DollarSign,
+  Search,
+  TrendingDown,
+  Users,
+} from "lucide-react"
+
+import {
+  getAdminMetrics,
+  getAdminTenants,
+} from "@/lib/api"
+
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { PageHeader } from "@/components/ui/page-header"
-import { subscriptionStatusStyles } from "@/lib/statusStyles"
+
+import {
+  subscriptionStatusStyles,
+} from "@/lib/statusStyles"
 
 function initials(name: string) {
   return name
     .split(" ")
-    .map((w) => w[0])
+    .map((word) => word[0])
     .join("")
     .slice(0, 2)
     .toUpperCase()
@@ -21,113 +34,295 @@ function initials(name: string) {
 export default function AdminOverview() {
   const [query, setQuery] = useState("")
 
-  const { data: metrics, isLoading: metricsLoading } = useQuery({
+  const {
+    data: metrics,
+    isLoading: metricsLoading,
+  } = useQuery({
     queryKey: ["admin-metrics"],
     queryFn: getAdminMetrics,
   })
 
-  const { data: tenants, isLoading: tenantsLoading } = useQuery({
+  const {
+    data: tenants,
+    isLoading: tenantsLoading,
+  } = useQuery({
     queryKey: ["admin-tenants"],
     queryFn: getAdminTenants,
   })
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
+
     if (!q) return tenants ?? []
+
     return (tenants ?? []).filter(
-      (t) =>
-        t.organizationName.toLowerCase().includes(q) ||
-        t.planName.toLowerCase().includes(q) ||
-        t.subscriptionStatus.toLowerCase().includes(q)
+      (tenant) =>
+        tenant.organizationName
+          .toLowerCase()
+          .includes(q) ||
+        tenant.planName
+          .toLowerCase()
+          .includes(q) ||
+        tenant.subscriptionStatus
+          .toLowerCase()
+          .includes(q)
     )
   }, [tenants, query])
 
-  if (metricsLoading || tenantsLoading) {
-    return <p className="text-[#8b8b9c]">Loading admin data...</p>
+  if (
+    metricsLoading ||
+    tenantsLoading
+  ) {
+    return (
+      <div className="space-y-4">
+        <div className="h-4 w-32 animate-pulse rounded bg-[var(--st-surface-hover)]" />
+        <div className="h-12 w-72 animate-pulse rounded bg-[var(--st-surface-hover)]" />
+      </div>
+    )
   }
 
   const stats = [
-    { label: "MRR", value: `$${((metrics?.mrrCents ?? 0) / 100).toFixed(2)}`, icon: DollarSign },
-    { label: "Organizations", value: metrics?.totalOrganizations ?? 0, icon: Building2 },
-    { label: "Active subscriptions", value: metrics?.activeSubscriptions ?? 0, icon: Users },
-    { label: "Churn rate", value: `${metrics?.churnRatePercent ?? 0}%`, icon: TrendingDown },
+    {
+      label: "Monthly recurring revenue",
+      shortLabel: "MRR",
+      value: `$${(
+        (metrics?.mrrCents ?? 0) /
+        100
+      ).toFixed(2)}`,
+      icon: DollarSign,
+    },
+    {
+      label: "Organizations",
+      shortLabel: "Organizations",
+      value:
+        metrics?.totalOrganizations ?? 0,
+      icon: Building2,
+    },
+    {
+      label: "Active subscriptions",
+      shortLabel: "Active subscriptions",
+      value:
+        metrics?.activeSubscriptions ?? 0,
+      icon: Users,
+    },
+    {
+      label: "Churn rate",
+      shortLabel: "Churn rate",
+      value: `${metrics?.churnRatePercent ?? 0}%`,
+      icon: TrendingDown,
+    },
   ]
 
   return (
-    <div className="mx-auto max-w-5xl space-y-8">
+    <div className="mx-auto max-w-6xl space-y-10 pb-12">
+
       <PageHeader
         eyebrow="Platform admin"
         title="Admin console"
-        description="Cross-tenant metrics across every organization on the platform — separate from the owner console for a single tenant."
+        description="Monitor the health of your billing platform across every organization."
       />
 
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-        {stats.map((stat, i) => (
-          <motion.div
-            key={stat.label}
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.05 }}
-          >
-            <Card className="space-y-2">
-              <stat.icon size={18} className="text-[#7c5cff]" />
-              <p className="text-xs text-[#8b8b9c]">{stat.label}</p>
-              <p className="text-2xl font-semibold">{stat.value}</p>
-            </Card>
-          </motion.div>
+      {/* METRICS */}
+
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+
+        {stats.map((stat) => (
+          <Card key={stat.label}>
+
+            <div className="flex items-start justify-between">
+
+              <div>
+
+                <p className="eyebrow">
+                  {stat.shortLabel}
+                </p>
+
+                <p className="mt-5 text-3xl font-semibold tracking-[-0.045em]">
+                  {stat.value}
+                </p>
+
+              </div>
+
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-[var(--st-border)] bg-[var(--st-surface-raised)]">
+
+                <stat.icon
+                  size={16}
+                  className="text-[var(--st-action)]"
+                />
+
+              </div>
+
+            </div>
+
+          </Card>
         ))}
+
       </div>
 
-      <div>
-        <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-sm text-[#8b8b9c]">All tenants</p>
-          <div className="relative w-full sm:w-64">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#5c5c6b]" />
+      {/* DIRECTORY */}
+
+      <section>
+
+        <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+
+          <div>
+
+            <p className="eyebrow">
+              Directory
+            </p>
+
+            <h2 className="mt-2 text-2xl font-semibold tracking-[-0.035em]">
+              All tenants
+            </h2>
+
+            <p className="mt-1 text-sm text-[var(--st-text-muted)]">
+              {filtered.length} organization
+              {filtered.length === 1
+                ? ""
+                : "s"}{" "}
+              shown
+            </p>
+
+          </div>
+
+          <div className="relative w-full lg:w-72">
+
+            <Search
+              size={15}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--st-text-faint)]"
+            />
+
             <Input
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Filter tenants..."
-              className="pl-8"
+              onChange={(event) =>
+                setQuery(event.target.value)
+              }
+              placeholder="Search organizations..."
+              className="h-10 pl-9"
             />
+
           </div>
+
         </div>
+
         <Card className="overflow-hidden p-0">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-[#262633] text-left text-[#8b8b9c]">
-                <th className="p-3 font-normal">Organization</th>
-                <th className="p-3 font-normal">Plan</th>
-                <th className="p-3 font-normal">Status</th>
-                <th className="p-3 font-normal">Joined</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((t) => (
-                <tr key={t.organizationId} className="border-b border-[#262633] last:border-0">
-                  <td className="p-3">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#7c5cff]/15 text-xs font-medium text-[#c4b5fd]">
-                        {initials(t.organizationName)}
-                      </div>
-                      {t.organizationName}
-                    </div>
-                  </td>
-                  <td className="p-3 text-[#8b8b9c]">{t.planName}</td>
-                  <td className="p-3">
-                    <Badge className={subscriptionStatusStyles[t.subscriptionStatus] ?? subscriptionStatusStyles.NONE}>
-                      {t.subscriptionStatus}
-                    </Badge>
-                  </td>
-                  <td className="p-3 text-[#8b8b9c]">{new Date(t.createdAt).toLocaleDateString()}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+
+          {/* HEADER */}
+
+          <div className="hidden grid-cols-[minmax(220px,2fr)_1fr_1fr_1fr] border-b border-[var(--st-border)] bg-[var(--st-surface-raised)] px-5 py-3 text-[10px] font-medium uppercase tracking-[0.14em] text-[var(--st-text-faint)] md:grid">
+
+            <span>Organization</span>
+            <span>Plan</span>
+            <span>Status</span>
+            <span>Joined</span>
+
+          </div>
+
+          {/* ROWS */}
+
+          {filtered.map((tenant) => (
+
+            <div
+              key={tenant.organizationId}
+              className="grid gap-3 border-b border-[var(--st-border)] px-5 py-4 last:border-0 hover:bg-[var(--st-surface-hover)] md:grid-cols-[minmax(220px,2fr)_1fr_1fr_1fr] md:items-center"
+            >
+
+              <div className="flex items-center gap-3">
+
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-[var(--st-border)] bg-[var(--st-surface-raised)] text-xs font-semibold">
+                  {initials(
+                    tenant.organizationName
+                  )}
+                </div>
+
+                <div>
+
+                  <p className="text-sm font-medium">
+                    {tenant.organizationName}
+                  </p>
+
+                  <p className="mt-0.5 font-mono text-[10px] text-[var(--st-text-faint)]">
+                    {tenant.organizationId.slice(
+                      0,
+                      8
+                    )}
+                    ...
+                  </p>
+
+                </div>
+
+              </div>
+
+              <div className="flex items-center justify-between md:block">
+
+                <span className="text-xs uppercase tracking-[0.1em] text-[var(--st-text-faint)] md:hidden">
+                  Plan
+                </span>
+
+                <span className="text-sm">
+                  {tenant.planName === "NONE"
+                    ? "—"
+                    : tenant.planName}
+                </span>
+
+              </div>
+
+              <div className="flex items-center justify-between md:block">
+
+                <span className="text-xs uppercase tracking-[0.1em] text-[var(--st-text-faint)] md:hidden">
+                  Status
+                </span>
+
+                <Badge
+                  className={
+                    subscriptionStatusStyles[
+                      tenant.subscriptionStatus
+                    ] ??
+                    subscriptionStatusStyles.NONE
+                  }
+                >
+                  {tenant.subscriptionStatus}
+                </Badge>
+
+              </div>
+
+              <div className="flex items-center justify-between md:block">
+
+                <span className="text-xs uppercase tracking-[0.1em] text-[var(--st-text-faint)] md:hidden">
+                  Joined
+                </span>
+
+                <span className="text-sm text-[var(--st-text-muted)]">
+                  {new Date(
+                    tenant.createdAt
+                  ).toLocaleDateString()}
+                </span>
+
+              </div>
+
+            </div>
+
+          ))}
+
           {filtered.length === 0 && (
-            <p className="p-6 text-center text-sm text-[#8b8b9c]">No tenants match that filter.</p>
+            <div className="px-6 py-16 text-center">
+
+              <p className="text-sm font-medium">
+                No organizations found
+              </p>
+
+              <p className="mt-1 text-sm text-[var(--st-text-muted)]">
+                Try a different organization,
+                plan, or status.
+              </p>
+
+            </div>
           )}
+
         </Card>
-      </div>
+
+      </section>
+
     </div>
   )
 }

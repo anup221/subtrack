@@ -1,135 +1,349 @@
-import { motion } from "framer-motion"
+import {
+  ArrowRight,
+  BarChart3,
+  Check,
+  CircleDollarSign,
+  Receipt,
+  ShieldCheck,
+  Users,
+  Zap,
+} from "lucide-react"
+
 import { useNavigate } from "react-router-dom"
-import { Shield, Zap, Receipt, Webhook, BarChart3, Users, Sparkles, ArrowRight } from "lucide-react"
-import { Card } from "@/components/ui/card"
+
 import { Button } from "@/components/ui/button"
 
 const features = [
   {
     icon: Users,
+    number: "01",
     title: "Multi-tenant by design",
-    description: "Every organization's data is isolated at the request level via JWT-resolved tenant context.",
+    description:
+      "Every organization gets an isolated billing workspace with tenant-aware permissions.",
   },
   {
     icon: Zap,
-    title: "Real-time usage metering",
-    description: "Redis-backed atomic counters enforce plan limits instantly, with a Postgres audit trail.",
+    number: "02",
+    title: "Usage that stays honest",
+    description:
+      "Meter API consumption and keep subscription limits visible in real time.",
   },
   {
     icon: Receipt,
-    title: "Automated invoicing",
-    description: "Scheduled billing cycles generate itemized invoices from plan fees plus metered usage.",
+    number: "03",
+    title: "Invoices without busywork",
+    description:
+      "Generate clear invoices from recurring plans and metered usage.",
   },
   {
-    icon: Webhook,
-    title: "Signed webhooks",
-    description: "HMAC-signed payment callbacks with idempotent event processing — duplicates do nothing.",
+    icon: CircleDollarSign,
+    number: "04",
+    title: "Payments built in",
+    description:
+      "Connect invoice settlement to payment attempts and Razorpay checkout.",
   },
   {
     icon: BarChart3,
-    title: "Owner vs platform views",
-    description: "Organization owners manage their tenant. Platform admins see MRR, churn, and every org.",
+    number: "05",
+    title: "One clear control plane",
+    description:
+      "Owners manage their workspace while platform admins see the bigger picture.",
   },
   {
-    icon: Shield,
-    title: "Dunning & recovery",
-    description: "Failed payments retry automatically and suspend the subscription after repeated failures.",
+    icon: ShieldCheck,
+    number: "06",
+    title: "Recovery and control",
+    description:
+      "Keep subscriptions, payments, invoices, and billing history consistent.",
   },
 ]
 
-function FadeIn({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 16 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-80px" }}
-      transition={{ duration: 0.5, delay }}
-    >
-      {children}
-    </motion.div>
-  )
-}
-
-function App() {
+export default function App() {
   const navigate = useNavigate()
 
   return (
-    <div className="min-h-screen">
-      <nav className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5 md:px-8">
-        <button onClick={() => navigate("/")} className="flex items-center gap-2.5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-[#7c5cff] to-[#22d3ee]">
-            <Sparkles size={15} className="text-white" />
+    <div className="min-h-screen bg-[var(--st-bg)] text-[var(--st-text)]">
+
+      {/* NAVIGATION */}
+
+      <nav className="mx-auto flex max-w-7xl items-center justify-between px-6 py-6 md:px-10">
+
+        <button
+          type="button"
+          onClick={() => navigate("/")}
+          className="flex items-center gap-3"
+        >
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[var(--st-text)] text-[var(--st-bg)]">
+            <span className="font-serif text-lg">
+              S
+            </span>
           </div>
-          <span className="font-semibold tracking-tight">SubTrack</span>
+
+          <div className="text-left">
+            <div className="text-sm font-semibold">
+              SubTrack
+            </div>
+
+            <div className="eyebrow mt-1 hidden sm:block">
+              Billing infrastructure
+            </div>
+          </div>
         </button>
+
         <div className="flex items-center gap-2">
-          <Button variant="ghost" onClick={() => navigate("/login")}>
+
+          <Button
+            variant="ghost"
+            onClick={() => navigate("/login")}
+          >
             Log in
           </Button>
-          <Button onClick={() => navigate("/signup")}>Get started</Button>
+
+          <Button
+            onClick={() => navigate("/signup")}
+          >
+            Get started
+            <ArrowRight size={15} />
+          </Button>
+
         </div>
       </nav>
 
-      <section className="mx-auto max-w-4xl space-y-6 px-6 pb-24 pt-16 text-center md:pt-24">
-        <FadeIn>
-          <span className="inline-block rounded-full border border-[#7c5cff]/40 bg-[#7c5cff]/10 px-3 py-1 text-xs font-medium text-[#c4b5fd]">
-            Multi-tenant SaaS billing, built from scratch
-          </span>
-        </FadeIn>
-        <FadeIn delay={0.1}>
-          <h1 className="text-4xl font-bold tracking-tight md:text-6xl">
-            Billing infrastructure
-            <br />
-            that scales with your tenants
-          </h1>
-        </FadeIn>
-        <FadeIn delay={0.2}>
-          <p className="mx-auto max-w-2xl text-lg text-[#8b8b9c]">
-            Subscriptions, usage-based limits, invoicing, and payment webhooks — with a dedicated
-            owner console for each organization and a separate platform admin view.
-          </p>
-        </FadeIn>
-        <FadeIn delay={0.3}>
-          <div className="flex items-center justify-center gap-3 pt-2">
-            <Button size="lg" onClick={() => navigate("/signup")}>
-              Start free
-              <ArrowRight size={16} className="ml-2" />
-            </Button>
-            <Button size="lg" variant="outline" onClick={() => navigate("/login")}>
-              Log in
-            </Button>
-          </div>
-        </FadeIn>
-      </section>
+      {/* HERO */}
 
-      <section className="mx-auto max-w-6xl px-6 pb-24">
-        <FadeIn>
-          <h2 className="mb-2 text-center text-2xl font-semibold">Everything a real billing system needs</h2>
-          <p className="mb-12 text-center text-[#8b8b9c]">
-            Owner workspace for one tenant. Admin console for the whole platform.
+      <section className="mx-auto max-w-7xl px-6 pb-28 pt-20 md:px-10 md:pt-28">
+
+        <div className="max-w-5xl">
+
+          <div className="mb-7 flex items-center gap-3">
+            <div className="h-px w-8 bg-[var(--st-accent)]" />
+
+            <span className="eyebrow text-[var(--st-accent)]">
+              SaaS billing infrastructure
+            </span>
+          </div>
+
+          <h1 className="display text-6xl leading-[0.92] sm:text-7xl md:text-8xl lg:text-9xl">
+            Billing
+            <br />
+            <span className="text-[var(--st-text-muted)]">
+              without the noise.
+            </span>
+          </h1>
+
+          <p className="mt-9 max-w-2xl text-base leading-8 text-[var(--st-text-muted)] md:text-lg">
+            SubTrack gives SaaS teams a focused system for
+            subscriptions, usage metering, invoices, and
+            payments — all from one clean control plane.
           </p>
-        </FadeIn>
-        <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
-          {features.map((feature, i) => (
-            <FadeIn key={feature.title} delay={i * 0.05}>
-              <Card className="h-full space-y-3">
-                <feature.icon size={22} className="text-[#7c5cff]" />
-                <h3 className="font-semibold">{feature.title}</h3>
-                <p className="text-sm text-[#8b8b9c]">{feature.description}</p>
-              </Card>
-            </FadeIn>
-          ))}
+
+          <div className="mt-9 flex flex-wrap gap-3">
+
+            <Button
+              size="lg"
+              onClick={() => navigate("/signup")}
+            >
+              Start building
+              <ArrowRight size={16} />
+            </Button>
+
+            <Button
+              size="lg"
+              variant="outline"
+              onClick={() => navigate("/login")}
+            >
+              Sign in
+            </Button>
+
+          </div>
+
+          <div className="mt-14 flex flex-wrap gap-x-8 gap-y-3 border-t border-[var(--st-border)] pt-6">
+
+            {[
+              "Tenant isolation",
+              "Usage metering",
+              "Invoice generation",
+              "Razorpay payments",
+            ].map((item) => (
+              <div
+                key={item}
+                className="flex items-center gap-2 text-xs text-[var(--st-text-muted)]"
+              >
+                <Check
+                  size={13}
+                  className="text-[var(--st-accent)]"
+                />
+
+                {item}
+              </div>
+            ))}
+
+          </div>
+
         </div>
       </section>
 
-      <footer className="border-t border-[#262633] py-10 text-center space-y-2">
-        <p className="text-sm text-[#8b8b9c]">Built with Spring Boot · PostgreSQL · Redis · React · TypeScript</p>
-        <p className="text-xs text-[#5c5c6b]">
-          SubTrack — a portfolio project demonstrating multi-tenant billing architecture.
-        </p>
+      {/* STATEMENT */}
+
+      <section className="border-y border-[var(--st-border)] bg-[var(--st-surface)]">
+
+        <div className="mx-auto grid max-w-7xl md:grid-cols-3">
+
+          <div className="border-b border-[var(--st-border)] p-8 md:border-b-0 md:border-r md:p-10">
+            <span className="eyebrow">
+              The idea
+            </span>
+
+            <h2 className="display mt-5 text-3xl leading-tight">
+              Make the complex parts feel simple.
+            </h2>
+          </div>
+
+          <div className="border-b border-[var(--st-border)] p-8 md:border-b-0 md:border-r md:p-10">
+            <span className="eyebrow">
+              For developers
+            </span>
+
+            <p className="mt-5 text-sm leading-7 text-[var(--st-text-muted)]">
+              Clean APIs, predictable billing state,
+              usage limits, and explicit payment flows.
+            </p>
+          </div>
+
+          <div className="p-8 md:p-10">
+            <span className="eyebrow">
+              For operators
+            </span>
+
+            <p className="mt-5 text-sm leading-7 text-[var(--st-text-muted)]">
+              Clear subscription state, invoices,
+              payment history, and organization-level
+              visibility.
+            </p>
+          </div>
+
+        </div>
+
+      </section>
+
+      {/* FEATURES */}
+
+      <section className="mx-auto max-w-7xl px-6 py-28 md:px-10">
+
+        <div className="mb-14 max-w-2xl">
+
+          <div className="mb-5 flex items-center gap-3">
+            <div className="h-px w-8 bg-[var(--st-accent)]" />
+
+            <span className="eyebrow">
+              Built for the real thing
+            </span>
+          </div>
+
+          <h2 className="display text-5xl leading-none md:text-6xl">
+            Everything your billing layer needs.
+          </h2>
+
+        </div>
+
+        <div className="grid overflow-hidden border border-[var(--st-border)] md:grid-cols-2 lg:grid-cols-3">
+
+          {features.map((feature) => {
+            const Icon = feature.icon
+
+            return (
+              <article
+                key={feature.title}
+                className="group border-b border-r border-[var(--st-border)] bg-[var(--st-surface)] p-8 transition-colors duration-200 hover:bg-[var(--st-surface-hover)]"
+              >
+
+                <div className="flex items-start justify-between">
+
+                  <span className="mono text-[10px] text-[var(--st-text-faint)]">
+                    {feature.number}
+                  </span>
+
+                  <Icon
+                    size={19}
+                    strokeWidth={1.7}
+                    className="text-[var(--st-accent)] transition-transform duration-200 group-hover:scale-110"
+                  />
+
+                </div>
+
+                <h3 className="mt-14 text-lg font-semibold tracking-tight">
+                  {feature.title}
+                </h3>
+
+                <p className="mt-3 text-sm leading-6 text-[var(--st-text-muted)]">
+                  {feature.description}
+                </p>
+
+                <div className="mt-8 h-px w-0 bg-[var(--st-accent)] transition-all duration-300 group-hover:w-10" />
+
+              </article>
+            )
+          })}
+
+        </div>
+
+      </section>
+
+      {/* CTA */}
+
+      <section className="mx-auto max-w-7xl px-6 pb-28 md:px-10">
+
+        <div className="border border-[var(--st-border)] bg-[var(--st-surface)] p-8 md:p-14">
+
+          <span className="eyebrow text-[var(--st-accent)]">
+            Start with SubTrack
+          </span>
+
+          <h2 className="display mt-6 max-w-3xl text-5xl leading-none md:text-7xl">
+            Build the billing layer
+            your product deserves.
+          </h2>
+
+          <div className="mt-8">
+
+            <Button
+              size="lg"
+              onClick={() => navigate("/signup")}
+            >
+              Create your workspace
+              <ArrowRight size={16} />
+            </Button>
+
+          </div>
+
+        </div>
+
+      </section>
+
+      {/* FOOTER */}
+
+      <footer className="border-t border-[var(--st-border)]">
+
+        <div className="mx-auto flex max-w-7xl flex-col gap-3 px-6 py-8 md:flex-row md:items-center md:justify-between md:px-10">
+
+          <div>
+            <p className="text-sm font-semibold">
+              SubTrack
+            </p>
+
+            <p className="mt-1 text-xs text-[var(--st-text-faint)]">
+              Multi-tenant SaaS billing infrastructure.
+            </p>
+          </div>
+
+          <p className="mono text-[9px] uppercase tracking-wider text-[var(--st-text-faint)]">
+            React · TypeScript · Spring Boot · PostgreSQL
+          </p>
+
+        </div>
+
       </footer>
+
     </div>
   )
 }
-
-export default App

@@ -1,14 +1,27 @@
+const base = "border"
+
+const tone = {
+  success: `${base} bg-[var(--success-soft)] text-[var(--success)] border-[color-mix(in_srgb,var(--success)_35%,transparent)]`,
+
+  warning: `${base} bg-[var(--warning-soft)] text-[var(--warning)] border-[color-mix(in_srgb,var(--warning)_35%,transparent)]`,
+
+  danger: `${base} bg-[var(--danger-soft)] text-[var(--danger)] border-[color-mix(in_srgb,var(--danger)_35%,transparent)]`,
+
+  neutral: `${base} bg-[var(--surface-sunken)] text-[var(--text-muted)] border-[var(--border)]`,
+}
+
 export const subscriptionStatusStyles: Record<string, string> = {
-  TRIAL: "bg-[#fbbf24]/15 text-[#fbbf24] ring-1 ring-[#fbbf24]/20",
-  ACTIVE: "bg-[#34d399]/15 text-[#34d399] ring-1 ring-[#34d399]/20",
-  PAST_DUE: "bg-orange-500/15 text-orange-400 ring-1 ring-orange-500/20",
-  CANCELED: "bg-[#f87171]/15 text-[#f87171] ring-1 ring-[#f87171]/20",
-  NONE: "bg-white/10 text-[#8b8b9c] ring-1 ring-white/10",
+  TRIAL: tone.warning,
+  ACTIVE: tone.success,
+  PAST_DUE: tone.warning,
+  CANCELED: tone.danger,
+  NONE: tone.neutral,
 }
 
 export const paymentStatusStyles: Record<string, string> = {
-  PAID: "bg-[#34d399]/15 text-[#34d399] ring-1 ring-[#34d399]/20",
-  SUCCEEDED: "bg-[#34d399]/15 text-[#34d399] ring-1 ring-[#34d399]/20",
-  FAILED: "bg-[#f87171]/15 text-[#f87171] ring-1 ring-[#f87171]/20",
-  PENDING: "bg-[#fbbf24]/15 text-[#fbbf24] ring-1 ring-[#fbbf24]/20",
+  PAID: tone.success,
+  SUCCEEDED: tone.success,
+  FAILED: tone.danger,
+  PENDING: tone.warning,
+  REFUNDED: tone.neutral,
 }

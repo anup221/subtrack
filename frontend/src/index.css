@@ -1,111 +1,386 @@
 @import "tailwindcss";
 
-:root,
-[data-theme="dark"] {
-  --background: #07070c;
-  --surface: #101018;
-  --surface-hover: #171722;
-  --border: #262633;
-  --text: #f0f0f7;
-  --text-muted: #8b8b9c;
-  --text-faint: #5c5c6b;
+:root {
+  --background: #0b0b0a;
+  --surface: #131311;
+  --surface-raised: #191917;
+  --surface-hover: #20201d;
 
-  --accent: #7c5cff;
-  --accent-soft: #a78bfa;
-  --accent-2: #22d3ee;
+  --border: #2b2b27;
+  --border-strong: #3b3b35;
 
-  --success: #34d399;
-  --warning: #fbbf24;
-  --danger: #f87171;
+  --text: #f4f1e9;
+  --text-muted: #a6a39a;
+  --text-faint: #6f6d65;
 
-  --glow: 0 0 32px rgba(124, 92, 255, 0.28);
-  --cyan-glow: 0 0 28px rgba(34, 211, 238, 0.16);
-  --radius: 14px;
+  --accent: #ff6659;
+  --accent-hover: #ff5144;
+
+  --success: #69bd91;
+  --warning: #e3b264;
+  --danger: #ff6b67;
+
+  /* SubTrack tokens */
+  --st-bg: var(--background);
+  --st-surface: var(--surface);
+  --st-surface-raised: var(--surface-raised);
+  --st-surface-hover: var(--surface-hover);
+
+  --st-border: var(--border);
+  --st-border-strong: var(--border-strong);
+
+  --st-text: var(--text);
+  --st-text-muted: var(--text-muted);
+  --st-text-subtle: var(--text-faint);
+
+  --st-action: var(--accent);
+  --st-action-hover: var(--accent-hover);
+  --st-action-text: #ffffff;
+
+  --st-accent: var(--accent);
+
+  --st-success: var(--success);
+  --st-warning: var(--warning);
+
+  --st-danger: var(--danger);
+  --st-danger-bg: rgba(255, 107, 103, 0.08);
+  --st-danger-border: rgba(255, 107, 103, 0.25);
+
+  --st-radius: 12px;
 }
+
+/* =========================================================
+   LIGHT THEME
+========================================================= */
 
 [data-theme="light"] {
-  --background: #f6f6fb;
-  --surface: #ffffff;
-  --surface-hover: #f0f0f6;
-  --border: #e2e2ec;
-  --text: #14141c;
-  --text-muted: #5c5c6b;
-  --text-faint: #8b8b9c;
+  --background: #f5f2ea;
+  --surface: #fffdf8;
+  --surface-raised: #ffffff;
+  --surface-hover: #eeeae1;
 
-  --accent: #6d3fff;
-  --accent-soft: #7c5cff;
-  --accent-2: #0891b2;
+  --border: #ded9ce;
+  --border-strong: #c7c0b4;
 
-  --success: #059669;
-  --warning: #b45309;
-  --danger: #dc2626;
+  --text: #171714;
+  --text-muted: #66645d;
+  --text-faint: #969289;
 
-  --glow: 0 0 24px rgba(109, 63, 255, 0.14);
-  --cyan-glow: 0 0 20px rgba(8, 145, 178, 0.12);
-  --radius: 14px;
+  --accent: #d94e43;
+  --accent-hover: #c94137;
+
+  --success: #31815a;
+  --warning: #a66c1c;
+  --danger: #c83d39;
+
+  --st-bg: var(--background);
+  --st-surface: var(--surface);
+  --st-surface-raised: var(--surface-raised);
+  --st-surface-hover: var(--surface-hover);
+
+  --st-border: var(--border);
+  --st-border-strong: var(--border-strong);
+
+  --st-text: var(--text);
+  --st-text-muted: var(--text-muted);
+  --st-text-subtle: var(--text-faint);
+
+  --st-action: var(--accent);
+  --st-action-hover: var(--accent-hover);
+  --st-action-text: #ffffff;
+
+  --st-accent: var(--accent);
+
+  --st-success: var(--success);
+  --st-warning: var(--warning);
+
+  --st-danger: var(--danger);
+  --st-danger-bg: rgba(200, 61, 57, 0.07);
+  --st-danger-border: rgba(200, 61, 57, 0.22);
+
+  --st-radius: 12px;
 }
 
+/* =========================================================
+   BASE
+========================================================= */
+
 * {
-  border-color: var(--border);
   box-sizing: border-box;
+  border-color: var(--border);
+}
+
+html {
+  scroll-behavior: smooth;
+  background: var(--background);
 }
 
 body {
   margin: 0;
+  min-width: 320px;
   min-height: 100vh;
-  background:
-    radial-gradient(ellipse 80% 50% at 12% -8%, color-mix(in srgb, var(--accent) 16%, transparent) 0%, transparent 50%),
-    radial-gradient(ellipse 60% 40% at 92% 0%, color-mix(in srgb, var(--accent-2) 8%, transparent) 0%, transparent 45%),
-    radial-gradient(ellipse 50% 30% at 50% 100%, color-mix(in srgb, var(--accent) 5%, transparent) 0%, transparent 50%),
-    var(--background);
+
+  background: var(--background);
   color: var(--text);
-  font-family: "Inter", system-ui, -apple-system, sans-serif;
+
+  font-family:
+    Inter,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+
+  font-size: 15px;
+  line-height: 1.5;
+
   -webkit-font-smoothing: antialiased;
-  transition: background-color 0.2s ease, color 0.2s ease;
+  -moz-osx-font-smoothing: grayscale;
+
+  text-rendering: optimizeLegibility;
+
+  transition:
+    background-color 200ms ease,
+    color 200ms ease;
 }
 
-.glass {
-  background: color-mix(in srgb, var(--surface) 72%, transparent);
-  backdrop-filter: blur(16px);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
+button,
+input,
+textarea,
+select {
+  font: inherit;
 }
 
-.glow-border {
-  border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
-  box-shadow: var(--glow);
+button {
+  cursor: pointer;
 }
 
-.cyan-glow {
-  border: 1px solid color-mix(in srgb, var(--accent-2) 35%, transparent);
-  box-shadow: var(--cyan-glow);
+button:disabled {
+  cursor: not-allowed;
 }
 
-.sidebar-bg {
-  background: color-mix(in srgb, var(--surface) 80%, transparent);
-}
-.header-bg {
-  background: color-mix(in srgb, var(--background) 80%, transparent);
+/* =========================================================
+   HEADINGS
+========================================================= */
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  margin: 0;
+  text-wrap: balance;
 }
 
-.text-muted {
-  color: var(--text-muted);
+p {
+  text-wrap: pretty;
 }
-.text-faint {
+
+/* =========================================================
+   TYPOGRAPHY
+========================================================= */
+
+.display {
+  font-family:
+    "Instrument Serif",
+    Georgia,
+    serif;
+
+  font-weight: 400;
+  letter-spacing: -0.035em;
+
+  text-wrap: balance;
+}
+
+.eyebrow {
+  font-family:
+    "IBM Plex Mono",
+    "SFMono-Regular",
+    Consolas,
+    monospace;
+
+  font-size: 10px;
+  line-height: 1.2;
+  font-weight: 500;
+
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+
   color: var(--text-faint);
 }
-.bg-surface {
+
+.mono {
+  font-family:
+    "IBM Plex Mono",
+    "SFMono-Regular",
+    Consolas,
+    monospace;
+}
+
+/* =========================================================
+   COMMON SURFACES
+========================================================= */
+
+.glass {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--st-radius);
+
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.08);
+
+  transition:
+    border-color 180ms ease,
+    background-color 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms ease;
+}
+
+.glass:hover {
+  border-color: var(--border-strong);
+}
+
+.surface {
   background: var(--surface);
 }
+
+.surface-raised {
+  background: var(--surface-raised);
+}
+
+/* =========================================================
+   TEXT HELPERS
+========================================================= */
+
+.text-primary {
+  color: var(--text);
+}
+
+.text-secondary {
+  color: var(--text-muted);
+}
+
+.text-tertiary {
+  color: var(--text-faint);
+}
+
+.text-accent {
+  color: var(--accent);
+}
+
+.text-success {
+  color: var(--success);
+}
+
+.text-warning {
+  color: var(--warning);
+}
+
+.text-danger {
+  color: var(--danger);
+}
+
+/* =========================================================
+   SELECTION
+========================================================= */
+
+::selection {
+  background: rgba(255, 102, 89, 0.25);
+  color: var(--text);
+}
+
+/* =========================================================
+   SCROLLBAR
+========================================================= */
 
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
-::-webkit-scrollbar-thumb {
-  background: var(--border);
-  border-radius: 8px;
-}
+
 ::-webkit-scrollbar-track {
   background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-faint);
+}
+
+/* =========================================================
+   FOCUS
+========================================================= */
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+/* =========================================================
+   SIMPLE PAGE ENTRANCE
+========================================================= */
+
+@keyframes st-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.st-enter {
+  animation: st-fade-up 450ms ease-out both;
+}
+
+/* =========================================================
+   HOVER LIFT
+========================================================= */
+
+.st-hover-lift {
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.st-hover-lift:hover {
+  transform: translateY(-2px);
+  border-color: var(--border-strong);
+}
+
+/* =========================================================
+   REDUCED MOTION
+========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 640px) {
+  body {
+    font-size: 14px;
+  }
+
+  .display {
+    letter-spacing: -0.025em;
+  }
 }

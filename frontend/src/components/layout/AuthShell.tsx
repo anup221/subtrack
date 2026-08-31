@@ -1,6 +1,7 @@
 import { ReactNode } from "react"
 import { useNavigate } from "react-router-dom"
-import { Sparkles } from "lucide-react"
+
+import { ThemeToggle } from "@/components/ui/theme-toggle"
 
 export function AuthShell({
   title,
@@ -15,43 +16,106 @@ export function AuthShell({
 }) {
   const navigate = useNavigate()
 
-  return (
-    <div className="grid min-h-screen lg:grid-cols-2">
-      <div className="relative hidden overflow-hidden border-r border-[#262633] lg:flex lg:flex-col lg:justify-between lg:p-12">
-        <button
-          onClick={() => navigate("/")}
-          className="flex items-center gap-2.5 text-left"
-        >
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-[#7c5cff] to-[#22d3ee]">
-            <Sparkles size={15} className="text-white" />
-          </div>
-          <span className="font-semibold">SubTrack</span>
-        </button>
-        <div className="max-w-md space-y-4">
-          <p className="text-3xl font-semibold tracking-tight">
-            Billing infrastructure for multi-tenant SaaS
-          </p>
-          <p className="text-[#8b8b9c]">
-            Subscriptions, usage metering, invoices, and signed webhooks — isolated per organization.
-          </p>
-        </div>
-        <p className="text-xs text-[#5c5c6b]">Spring Boot · PostgreSQL · Redis · React</p>
-      </div>
+  const mark = (
+    <span className="flex items-center gap-2.5">
+      <span className="flex h-7 w-7 items-center justify-center rounded-[var(--radius)] bg-[var(--action)] font-mono text-[13px] font-medium text-[var(--action-text)]">
+        S
+      </span>
 
-      <div className="flex items-center justify-center px-6 py-16">
-        <div className="w-full max-w-md space-y-6">
-          <button onClick={() => navigate("/")} className="flex items-center gap-2 lg:hidden">
-            <Sparkles size={16} className="text-[#7c5cff]" />
-            <span className="font-semibold">SubTrack</span>
-          </button>
-          <div>
-            <h1 className="text-2xl font-semibold">{title}</h1>
-            <p className="mt-1 text-sm text-[#8b8b9c]">{subtitle}</p>
+      <span className="display text-[18px]">
+        SubTrack
+      </span>
+    </span>
+  )
+
+  return (
+    <div className="grid min-h-screen lg:grid-cols-[1.1fr_1fr]">
+      <section className="relative hidden flex-col justify-between border-r border-[var(--border)] bg-[var(--bg-elevated)] p-12 lg:flex">
+        <button
+          type="button"
+          onClick={() => navigate("/")}
+          className="text-left"
+        >
+          {mark}
+        </button>
+
+        <div className="max-w-md">
+          <p className="eyebrow mb-6">
+            Billing OS
+          </p>
+
+          <p className="display text-[44px] leading-[1.04]">
+            Billing infrastructure
+            <br />
+            for multi-tenant SaaS
+          </p>
+
+          <p className="mt-5 text-[var(--text-muted)]">
+            Subscriptions, usage metering, invoices, and
+            signed payment workflows — isolated per organization.
+          </p>
+
+          <div className="mt-10 grid grid-cols-2 gap-px overflow-hidden rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--border)]">
+            {[
+              ["Tenant isolation", "JWT-resolved"],
+              ["Usage counters", "Redis atomic"],
+              ["Invoicing", "Scheduled"],
+              ["Webhooks", "HMAC signed"],
+            ].map(([label, value]) => (
+              <div
+                key={label}
+                className="bg-[var(--surface)] px-5 py-4"
+              >
+                <p className="eyebrow">
+                  {label}
+                </p>
+
+                <p className="mt-1 text-sm">
+                  {value}
+                </p>
+              </div>
+            ))}
           </div>
-          {children}
-          <div className="text-sm text-[#8b8b9c]">{footer}</div>
         </div>
-      </div>
+
+        <p className="eyebrow">
+          Spring Boot · PostgreSQL · Redis · React
+        </p>
+      </section>
+
+      <section className="flex items-center justify-center px-6 py-14">
+        <div className="w-full max-w-sm space-y-8">
+          <div className="flex items-center justify-between">
+            <button
+              type="button"
+              onClick={() => navigate("/")}
+              className="lg:hidden"
+            >
+              {mark}
+            </button>
+
+            <div className="ml-auto">
+              <ThemeToggle />
+            </div>
+          </div>
+
+          <div>
+            <h1 className="display text-[36px]">
+              {title}
+            </h1>
+
+            <p className="mt-2 text-sm text-[var(--text-muted)]">
+              {subtitle}
+            </p>
+          </div>
+
+          {children}
+
+          <div className="border-t border-[var(--border)] pt-5 text-sm text-[var(--text-muted)]">
+            {footer}
+          </div>
+        </div>
+      </section>
     </div>
   )
 }
