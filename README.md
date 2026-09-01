@@ -4,7 +4,7 @@
 
 SubTrack is a full-stack SaaS subscription and billing platform designed around the core backend architecture used by modern subscription-based products.
 
-The platform supports organization-based multi-tenancy, subscription plans, usage metering, automated billing, invoice management, Razorpay payments, JWT authentication, Google OAuth2, role-based authorization, and a dedicated platform administration layer.
+The platform supports organization-based multi-tenancy, subscription plans, automated billing, invoice management, Razorpay payments, JWT authentication, Google OAuth2, role-based authorization, organization dashboards, and a dedicated platform administration layer.
 
 The project focuses primarily on **backend engineering, SaaS architecture, payment workflows, tenant isolation, billing correctness, and production-oriented design** rather than simple CRUD operations.
 
@@ -14,6 +14,7 @@ The project focuses primarily on **backend engineering, SaaS architecture, payme
 
 - Multi-tenant SaaS architecture
 - Organization-level tenant isolation
+- Organization dashboard
 - JWT authentication
 - Google OAuth2 authentication
 - Role-based authorization
@@ -21,7 +22,6 @@ The project focuses primarily on **backend engineering, SaaS architecture, payme
 - Subscription lifecycle management
 - Plan upgrades and downgrades
 - Prorated upgrade billing
-- Usage-based metering
 - Automated billing cycles
 - Invoice generation and tracking
 - Razorpay payment integration
@@ -33,6 +33,8 @@ The project focuses primarily on **backend engineering, SaaS architecture, payme
 - Redis-backed infrastructure
 - Flyway database migrations
 - Platform administration dashboard
+- Organization management
+- Organization details and status management
 - Responsive React frontend
 - OpenAPI / Swagger documentation
 
@@ -50,7 +52,7 @@ SubTrack provides multiple authentication mechanisms:
 - Google OAuth2 login
 - Separate organization-user and platform-admin authentication
 - Role-based access control
-- Organization roles such as:
+- Organization roles:
   - `OWNER`
   - `ADMIN`
 - Platform-level role:
@@ -60,15 +62,13 @@ SubTrack provides multiple authentication mechanisms:
 
 JWT tokens contain the authenticated user's identity, role, and organization context where applicable.
 
-Platform administrators operate outside the organization tenant scope.
+Platform administrators operate outside the organization tenant scope and use a separate authentication flow.
 
 ---
 
 # 🏢 Multi-Tenancy
 
-SubTrack is designed as a multi-tenant SaaS application.
-
-Each organization acts as an isolated tenant.
+SubTrack is designed as a multi-tenant SaaS application where each organization acts as an isolated tenant.
 
 ### Tenant model
 
@@ -78,8 +78,6 @@ User
   └── Organization
           │
           ├── Subscription
-          │
-          ├── Usage
           │
           ├── Billing Cycles
           │
@@ -95,10 +93,51 @@ This prevents regular users from accessing another organization's:
 - subscriptions
 - invoices
 - payments
-- usage information
+- billing information
 - organization data
 
 Platform administrators have separate global-level access.
+
+---
+
+# 📊 Organization Dashboard
+
+Each organization has its own dedicated dashboard for managing its subscription and billing information.
+
+The organization dashboard provides a tenant-specific view of:
+
+- Current subscription
+- Active plan
+- Subscription status
+- Billing period
+- Next billing date
+- Billing information
+- Invoice history
+- Payment information
+- Organization details
+- Subscription management
+- Plan upgrades
+- Plan downgrades
+- Subscription cancellation
+
+The dashboard operates within the authenticated organization's tenant context.
+
+```text
+Organization User
+       │
+       ▼
+Organization Dashboard
+       │
+       ├── Subscription
+       │
+       ├── Billing
+       │
+       ├── Invoices
+       │
+       └── Organization
+```
+
+Organization users cannot access another organization's dashboard or billing information.
 
 ---
 
@@ -149,6 +188,32 @@ Subscription Activation
 ```
 
 This prevents the customer from being charged the full new-plan price when only a prorated difference is due.
+
+---
+
+# 📉 Plan Downgrades
+
+SubTrack also supports plan downgrades.
+
+A downgrade can be handled without incorrectly charging the customer for the lower-priced plan during the current billing period.
+
+```text
+Current Paid Plan
+      │
+      ▼
+Select Lower Plan
+      │
+      ▼
+Schedule Plan Change
+      │
+      ▼
+Current Billing Period Ends
+      │
+      ▼
+New Plan Becomes Active
+```
+
+This keeps billing behavior predictable while preventing unnecessary refunds or partial-period billing complexity.
 
 ---
 
@@ -260,50 +325,19 @@ Automatic Payment Attempt
 
 ---
 
-# 📊 Usage Metering
-
-The usage subsystem tracks customer consumption during the current billing period.
-
-### Features
-
-- Record usage
-- Current-period usage
-- Usage limits
-- Daily usage breakdown
-- Plan-based usage limits
-- Redis-backed infrastructure
-
-Example:
-
-```text
-Subscription Plan
-       │
-       ▼
-Maximum Usage
-       │
-       ▼
-Usage Recording
-       │
-       ▼
-Current Period Usage
-       │
-       ▼
-Usage Dashboard
-```
-
----
-
 # 🛡️ Platform Administration
 
-SubTrack contains a separate platform administration layer.
+SubTrack contains a dedicated platform administration layer.
 
 Platform administrators are different from organization-level owners and admins.
 
 ### Admin capabilities
 
 - Dedicated admin authentication
+- Admin signup
 - Admin login
-- Admin dashboard
+- Google OAuth2 admin login
+- Platform admin dashboard
 - Organization overview
 - Subscription overview
 - MRR metrics
@@ -315,6 +349,61 @@ Platform administrators are different from organization-level owners and admins.
 - Platform-level organization visibility
 
 The platform admin operates without an organization tenant context.
+
+---
+
+# 🖥️ Platform Admin Dashboard
+
+The platform administrator has access to a separate administrative dashboard that provides a global view of the SaaS platform.
+
+Unlike the organization dashboard, the admin dashboard is not restricted to a single tenant.
+
+### Admin dashboard
+
+```text
+Platform Admin
+      │
+      ▼
+Admin Dashboard
+      │
+      ├── Platform Metrics
+      │
+      ├── Organizations
+      │
+      ├── Subscription Overview
+      │
+      ├── Revenue Metrics
+      │
+      └── Organization Management
+```
+
+### Organization management
+
+Platform administrators can view organization-level information such as:
+
+- Organization name
+- Organization status
+- Owner information
+- Current subscription plan
+- Subscription status
+- Revenue generated
+- Invoice information
+- Organization creation date
+
+Administrators can also manage organization status independently from organization-level users.
+
+This creates a clear separation between:
+
+```text
+Organization Scope
+        │
+        ├── OWNER
+        └── ADMIN
+
+Platform Scope
+        │
+        └── PLATFORM_ADMIN
+```
 
 ---
 
@@ -339,6 +428,8 @@ The platform admin operates without an organization tenant context.
                     │  Billing                        │
                     │  Subscription Management        │
                     │  Payment Processing             │
+                    │  Organization Management        │
+                    │  Platform Administration        │
                     └───────────────┬─────────────────┘
                                     │
               ┌─────────────────────┼─────────────────────┐
@@ -347,9 +438,9 @@ The platform admin operates without an organization tenant context.
       ┌───────────────┐     ┌───────────────┐     ┌───────────────┐
       │  PostgreSQL   │     │     Redis     │     │   Razorpay    │
       │               │     │               │     │               │
-      │ Organizations │     │ Usage         │     │ Orders        │
-      │ Users         │     │ Infrastructure│     │ Payments      │
-      │ Plans         │     │ Rate Limiting │     │ Verification  │
+      │ Organizations │     │ Infrastructure│     │ Orders        │
+      │ Users         │     │ Support       │     │ Payments      │
+      │ Plans         │     │               │     │ Verification  │
       │ Subscriptions │     │               │     │ Webhooks      │
       │ Invoices      │     │               │     │               │
       │ Payments      │     │               │     │               │
@@ -369,15 +460,13 @@ The platform admin operates without an organization tenant context.
 | Spring Security | Authentication & authorization |
 | Spring Data JPA | Persistence layer |
 | Spring OAuth2 Client | Google OAuth2 |
-| JWT | Stateless authentication |
+| JWT | Authentication |
 | PostgreSQL | Primary database |
 | Flyway | Database migrations |
-| Redis | Usage/infrastructure support |
+| Redis | Infrastructure support |
 | Razorpay Java SDK | Payment processing |
 | Springdoc OpenAPI | API documentation |
 | Lombok | Boilerplate reduction |
-
-The current backend Maven configuration uses Java 25 and Spring Boot, with PostgreSQL/Flyway, Redis, OAuth2, JWT, Razorpay and OpenAPI dependencies. 
 
 ## Frontend
 
@@ -412,7 +501,7 @@ Organization
      └── Subscription
              │
              └── Plan
-             
+
 Subscription
      │
      ├── Billing Cycle
@@ -423,6 +512,8 @@ Subscription
      │
      └── Payment
 ```
+
+Platform administrators operate separately from organization-level users.
 
 Database schema changes are managed through Flyway migrations.
 
@@ -593,7 +684,7 @@ should be configured through the application's deployment environment.
 
 # 🔐 Google OAuth2
 
-SubTrack supports Google OAuth2 authentication for application users and platform administrators.
+SubTrack supports Google OAuth2 authentication for both application users and platform administrators.
 
 The OAuth flow is:
 
@@ -619,7 +710,7 @@ User / Organization Resolution
 JWT Session
  │
  ▼
-Frontend Dashboard
+Dashboard
 ```
 
 For local development, configure the appropriate OAuth redirect URI in Google Cloud Console.
@@ -655,13 +746,6 @@ POST /api/subscriptions/cancel
 
 ```text
 GET /api/plans
-```
-
-## Usage
-
-```text
-POST /api/usage/record
-GET  /api/usage/summary
 ```
 
 ## Invoices
@@ -747,6 +831,20 @@ Verify Payment
 Activate New Plan
 ```
 
+### Paid Plan Downgrade
+
+```text
+Current Paid Plan
+      ↓
+Select Lower Plan
+      ↓
+Schedule Downgrade
+      ↓
+Current Billing Period Ends
+      ↓
+New Plan Becomes Active
+```
+
 ### Duplicate Billing
 
 ```text
@@ -777,17 +875,13 @@ The database uniqueness constraint remains the final protection against concurre
 
 ![SubTrack Login](assets/screenshots/login.png)
 
-## Dashboard
+## Organization Dashboard
 
-![SubTrack Dashboard](assets/screenshots/dashboard.png)
+![SubTrack Organization Dashboard](assets/screenshots/organization-dashboard.png)
 
 ## Plans
 
 ![SubTrack Plans](assets/screenshots/plans.png)
-
-## Usage & Metering
-
-![SubTrack Usage](assets/screenshots/usage-meter.png)
 
 ## Billing & Invoices
 
@@ -796,6 +890,10 @@ The database uniqueness constraint remains the final protection against concurre
 ## Razorpay Payment
 
 ![Razorpay Payment](assets/screenshots/razorpay.png)
+
+## Platform Admin Dashboard
+
+![SubTrack Admin Dashboard](assets/screenshots/admin-dashboard.png)
 
 ---
 
@@ -826,8 +924,7 @@ subtrack/
 │   │   │   │       ├── payment/
 │   │   │   │       ├── plan/
 │   │   │   │       ├── subscription/
-│   │   │   │       ├── tenant/
-│   │   │   │       └── usage/
+│   │   │   │       └── tenant/
 │   │   │   │
 │   │   │   └── resources/
 │   │   │       └── db/migration/
@@ -855,6 +952,7 @@ This project demonstrates practical implementation of:
 - OAuth2 authentication
 - Role-based authorization
 - Tenant context propagation
+- Organization isolation
 - Subscription lifecycle management
 - Billing-cycle design
 - Proration calculations
@@ -863,13 +961,13 @@ This project demonstrates practical implementation of:
 - Payment signature verification
 - Webhook processing
 - Idempotency and duplicate-operation protection
-- Usage metering
-- Redis integration
 - PostgreSQL relational modeling
+- Redis integration
 - Database migrations
 - REST API design
 - Frontend/backend separation
 - Docker-based local infrastructure
+- Platform administration architecture
 
 ---
 
@@ -892,6 +990,12 @@ Payment signatures are verified by the backend before changing payment or subscr
 Platform administrators are modeled separately from organization-level roles.
 
 This prevents organization owners from automatically gaining platform-level administrative privileges.
+
+### Payment-Dependent Subscription Activation
+
+Paid subscription changes are only applied after successful payment verification.
+
+This prevents an organization from receiving a paid plan without a corresponding successful payment.
 
 ### Flyway-Owned Schema
 
@@ -916,7 +1020,7 @@ Before deploying to production, configure:
 - Logging and monitoring
 - Error tracking
 - Rate limiting
-- Secure cookie/session configuration where applicable
+- Secure session configuration where applicable
 - Environment-specific configuration
 - CI/CD pipeline
 - Health checks
@@ -956,7 +1060,7 @@ Potential future improvements include:
 - Coupon and discount support
 - Tax calculation
 - Multiple currencies
-- Advanced analytics
+- Advanced platform analytics
 - Audit logs
 - Distributed locking for billing workers
 - CI/CD automation
