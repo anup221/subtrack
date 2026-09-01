@@ -18,19 +18,23 @@ export function AuthShell({
 
   const mark = (
     <span className="flex items-center gap-2.5">
-      <span className="flex h-7 w-7 items-center justify-center rounded-[var(--radius)] bg-[var(--action)] font-mono text-[13px] font-medium text-[var(--action-text)]">
+      <span className="st-logo-mark st-logo-glyph h-8 w-8 rounded-lg text-[14px]">
         S
       </span>
 
-      <span className="display text-[18px]">
-        SubTrack
-      </span>
+      <span className="display text-[19px]">SubTrack</span>
     </span>
   )
 
   return (
     <div className="grid min-h-screen lg:grid-cols-[1.1fr_1fr]">
-      <section className="relative hidden flex-col justify-between border-r border-[var(--border)] bg-[var(--bg-elevated)] p-12 lg:flex">
+      <section className="relative hidden flex-col justify-between overflow-hidden border-r border-[var(--border)] p-12 lg:flex">
+        {/* Single soft top-light */}
+        <div
+          className="pointer-events-none absolute -top-40 right-[-10%] h-[420px] w-[420px] rounded-full bg-[var(--accent-gradient-soft)] blur-3xl"
+          aria-hidden
+        />
+
         <button
           type="button"
           onClick={() => navigate("/")}
@@ -39,15 +43,17 @@ export function AuthShell({
           {mark}
         </button>
 
-        <div className="max-w-md">
+        <div className="relative max-w-md">
           <p className="eyebrow mb-6">
             Billing OS
           </p>
 
-          <p className="display text-[44px] leading-[1.04]">
+          <p className="display text-[46px] leading-[1.02] tracking-[-0.04em]">
             Billing infrastructure
             <br />
-            for multi-tenant SaaS
+            <span className="st-gradient-text">
+              for multi-tenant SaaS
+            </span>
           </p>
 
           <p className="mt-5 text-[var(--text-muted)]">
@@ -55,7 +61,7 @@ export function AuthShell({
             signed payment workflows — isolated per organization.
           </p>
 
-          <div className="mt-10 grid grid-cols-2 gap-px overflow-hidden rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--border)]">
+          <div className="mt-10 grid grid-cols-2 gap-3">
             {[
               ["Tenant isolation", "JWT-resolved"],
               ["Usage counters", "Redis atomic"],
@@ -64,13 +70,13 @@ export function AuthShell({
             ].map(([label, value]) => (
               <div
                 key={label}
-                className="bg-[var(--surface)] px-5 py-4"
+                className="rounded-lg border border-[var(--border-strong)] bg-[var(--surface)] p-4 shadow-[inset_0_1px_0_var(--edge)] transition-colors hover:border-[var(--accent-border)]"
               >
                 <p className="eyebrow">
                   {label}
                 </p>
 
-                <p className="mt-1 text-sm">
+                <p className="mt-1.5 text-sm font-medium">
                   {value}
                 </p>
               </div>

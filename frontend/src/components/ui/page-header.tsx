@@ -20,7 +20,7 @@ export function PageHeader({
 
           {eyebrow && (
             <div className="mb-5 flex items-center gap-3">
-              <span className="h-px w-8 bg-[var(--st-action)]" />
+              <span className="h-px w-10 bg-[var(--accent-gradient)]" />
 
               <span className="eyebrow">
                 {eyebrow}
@@ -28,7 +28,7 @@ export function PageHeader({
             </div>
           )}
 
-          <h1 className="text-[38px] font-semibold leading-[1.05] tracking-[-0.045em] text-[var(--st-text)] sm:text-[44px]">
+          <h1 className="display text-[34px] leading-[1.06] tracking-[-0.045em] text-[var(--st-text)] sm:text-[40px] md:text-[44px]">
             {title}
           </h1>
 

@@ -36,7 +36,7 @@ public class AuthService {
         user.setRole(Role.OWNER);
         userRepository.save(user);
 
-        subscriptionService.createTrialSubscription(org.getId());
+        subscriptionService.createFreeSubscription(org.getId());
 
         String token = jwtService.generateToken(user);
         return new AuthResponse(token, user.getEmail(), user.getRole().name(), org.getId());
@@ -48,6 +48,22 @@ public class AuthService {
 
         if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
             throw new BadCredentialsException("Invalid email or password");
+        }
+
+        Organization org = organizationRepository
+                .findById(user.getOrganizationId())
+                .orElse(null);
+
+        if (org != null && "DELETED".equals(org.getStatus())) {
+            throw new BadCredentialsException(
+                    "Your workspace has been deleted. Please sign up again to create a new one."
+            );
+        }
+
+        if (org != null && "BLOCKED".equals(org.getStatus())) {
+            throw new BadCredentialsException(
+                    "Your workspace has been blocked by the platform admin. Contact support for help."
+            );
         }
 
         String token = jwtService.generateToken(user);

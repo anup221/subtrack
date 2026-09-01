@@ -38,9 +38,11 @@ export default function OrganizationPage() {
   const {
     data: subscription,
     isLoading: subLoading,
+    isError: subError,
   } = useQuery({
     queryKey: ["subscription"],
     queryFn: getCurrentSubscription,
+    retry: false,
   })
 
   const {
@@ -68,6 +70,25 @@ export default function OrganizationPage() {
       <div className="space-y-4">
         <div className="h-4 w-32 animate-pulse rounded bg-[var(--st-surface-hover)]" />
         <div className="h-12 w-72 animate-pulse rounded bg-[var(--st-surface-hover)]" />
+      </div>
+    )
+  }
+
+  if (subError || !subscription) {
+    return (
+      <div className="mx-auto max-w-6xl pb-12">
+        <Card className="overflow-hidden p-0">
+          <div className="flex flex-col items-start gap-3 p-8 sm:flex-row sm:items-center">
+            <div>
+              <p className="text-base font-medium text-[var(--st-text)]">
+                No active subscription found
+              </p>
+              <p className="mt-1 text-sm leading-6 text-[var(--st-text-muted)]">
+                This workspace doesn't have a subscription yet.
+              </p>
+            </div>
+          </div>
+        </Card>
       </div>
     )
   }
@@ -115,11 +136,10 @@ export default function OrganizationPage() {
 
           <div className="flex items-start gap-4">
 
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-[var(--st-border)] bg-[var(--st-surface-raised)]">
+            <div className="st-accent-chip flex h-11 w-11 shrink-0 items-center justify-center rounded-xl">
 
               <Building2
                 size={19}
-                className="text-[var(--st-action)]"
               />
 
             </div>
@@ -136,7 +156,7 @@ export default function OrganizationPage() {
 
               <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-[var(--st-text-muted)]">
 
-                <span className="font-mono">
+                <span className="st-tabular font-mono">
                   {organizationId}
                 </span>
 
@@ -199,11 +219,11 @@ export default function OrganizationPage() {
 
             <div className="mt-7">
 
-              <p className="text-2xl font-semibold tracking-[-0.035em]">
+              <p className="display text-[26px] tracking-[-0.03em]">
                 {subscription?.plan.name}
               </p>
 
-              <p className="mt-2 text-sm text-[var(--st-text-muted)]">
+              <p className="st-tabular mt-2 text-sm text-[var(--st-text-muted)]">
                 $
                 {(
                   (subscription?.plan
@@ -238,24 +258,25 @@ export default function OrganizationPage() {
                 Usage
               </p>
 
-              <Gauge
-                size={16}
-                className="text-[var(--st-action)]"
-              />
+              <div className="st-accent-chip h-8 w-8 rounded-lg">
+                <Gauge
+                  size={15}
+                />
+              </div>
 
             </div>
 
             <div className="mt-7">
 
-              <p className="text-2xl font-semibold tracking-[-0.035em]">
+              <p className="st-tabular text-[26px] font-semibold tracking-[-0.035em]">
                 {summary?.currentPeriodUsage.toLocaleString()}
-                <span className="ml-1 text-sm font-normal text-[var(--st-text-muted)]">
+                <span className="ml-1.5 text-sm font-normal text-[var(--st-text-muted)]">
                   /
                   {summary?.maxUsage.toLocaleString()}
                 </span>
               </p>
 
-              <p className="mt-2 text-xs text-[var(--st-text-faint)]">
+              <p className="st-tabular mt-2 text-xs text-[var(--st-text-faint)]">
                 {percentUsed}% of plan limit
               </p>
 
@@ -266,7 +287,7 @@ export default function OrganizationPage() {
               <div className="h-1.5 overflow-hidden rounded-full bg-[var(--st-surface-hover)]">
 
                 <div
-                  className="h-full rounded-full bg-[var(--st-action)]"
+                  className="h-full rounded-full bg-[var(--accent-gradient)] shadow-[0_0_10px_color-mix(in_srgb,var(--accent)_55%,transparent)]"
                   style={{
                     width: `${percentUsed}%`,
                   }}
@@ -298,14 +319,15 @@ export default function OrganizationPage() {
                 Billing period
               </p>
 
-              <Calendar
-                size={16}
-                className="text-[var(--st-text-muted)]"
-              />
+              <div className="st-accent-chip h-8 w-8 rounded-lg">
+                <Calendar
+                  size={15}
+                />
+              </div>
 
             </div>
 
-            <p className="mt-7 text-sm font-medium">
+            <p className="st-tabular mt-7 text-sm font-medium">
               {subscription &&
                 `${new Date(
                   subscription.currentPeriodStart
@@ -390,21 +412,35 @@ export default function OrganizationPage() {
                   className="grid grid-cols-[1fr_auto] items-center gap-6 px-6 py-4 transition-colors hover:bg-[var(--st-surface-hover)] sm:grid-cols-[1fr_auto_auto]"
                 >
 
-                  <div>
+                  <div className="flex items-start gap-3">
 
-                    <p className="text-sm font-medium">
-                      {new Date(
-                        invoice.periodStart
-                      ).toLocaleDateString()}{" "}
-                      –{" "}
-                      {new Date(
-                        invoice.periodEnd
-                      ).toLocaleDateString()}
-                    </p>
+                    <span
+                      className={`st-status-dot mt-1.5 ${
+                        invoice.status === "PAID"
+                          ? "text-[var(--success)]"
+                          : invoice.status === "PENDING"
+                            ? "text-[var(--warning)]"
+                            : "text-[var(--danger)]"
+                      }`}
+                    />
 
-                    <p className="mt-1 text-xs text-[var(--st-text-faint)]">
-                      Invoice #{index + 1}
-                    </p>
+                    <div>
+
+                      <p className="st-tabular text-sm font-medium">
+                        {new Date(
+                          invoice.periodStart
+                        ).toLocaleDateString()}{" "}
+                        –{" "}
+                        {new Date(
+                          invoice.periodEnd
+                        ).toLocaleDateString()}
+                      </p>
+
+                      <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.08em] text-[var(--st-text-faint)]">
+                        Invoice #{index + 1}
+                      </p>
+
+                    </div>
 
                   </div>
 
@@ -418,7 +454,7 @@ export default function OrganizationPage() {
                     {invoice.status}
                   </Badge>
 
-                  <p className="hidden text-sm font-semibold sm:block">
+                  <p className="st-tabular hidden text-right text-sm font-semibold sm:block">
                     $
                     {(
                       invoice.totalCents /

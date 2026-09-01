@@ -5,6 +5,7 @@ import com.subtrack.subtrack.plan.Plan;
 import com.subtrack.subtrack.plan.PlanRepository;
 import com.subtrack.subtrack.subscription.Subscription;
 import com.subtrack.subtrack.subscription.SubscriptionRepository;
+import com.subtrack.subtrack.subscription.SubscriptionService;
 import com.subtrack.subtrack.subscription.SubscriptionStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -24,6 +25,7 @@ public class BillingCycleJob {
     private final BillingCycleRepository billingCycleRepository;
     private final BillingService billingService;
     private final AutopayService autopayService;
+    private final SubscriptionService subscriptionService;
 
     /**
      * Runs daily at 01:00.
@@ -101,6 +103,19 @@ public class BillingCycleJob {
         if (existing.isPresent()) {
             return;
         }
+
+        // A downgrade / switch to Free scheduled earlier now takes effect,
+        // so this month is billed on the new (cheaper) plan. Scheduled plan
+        // changes are never charged and have no invoice.
+        subscriptionService.applyScheduledPlanChange(sub.getOrganizationId());
+
+        // Re-read the subscription so the plan change above is reflected.
+        sub = subscriptionRepository.findByOrganizationId(sub.getOrganizationId())
+                .orElseThrow(() ->
+                        new IllegalStateException(
+                                "No subscription found for this organization"
+                        )
+                );
 
         Plan plan = planRepository.findById(sub.getPlanId())
                 .orElseThrow(() ->

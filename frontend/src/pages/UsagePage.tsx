@@ -218,7 +218,7 @@ export default function UsagePage() {
               data={chartData}
               index="date"
               categories={["API Calls"]}
-              colors={["red"]}
+              colors={["indigo"]}
               className="h-72"
               showLegend={false}
               showGridLines={false}

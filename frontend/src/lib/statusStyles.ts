@@ -1,13 +1,13 @@
 const base = "border"
 
 const tone = {
-  success: `${base} bg-[var(--success-soft)] text-[var(--success)] border-[color-mix(in_srgb,var(--success)_35%,transparent)]`,
+  success: `${base} bg-[var(--success-soft)] text-[var(--success)] border-[color-mix(in_srgb,var(--success)_35%,transparent)] shadow-[0_4px_16px_-8px_color-mix(in_srgb,var(--success)_55%,transparent)]`,
 
-  warning: `${base} bg-[var(--warning-soft)] text-[var(--warning)] border-[color-mix(in_srgb,var(--warning)_35%,transparent)]`,
+  warning: `${base} bg-[var(--warning-soft)] text-[var(--warning)] border-[color-mix(in_srgb,var(--warning)_35%,transparent)] shadow-[0_4px_16px_-8px_color-mix(in_srgb,var(--warning)_50%,transparent)]`,
 
-  danger: `${base} bg-[var(--danger-soft)] text-[var(--danger)] border-[color-mix(in_srgb,var(--danger)_35%,transparent)]`,
+  danger: `${base} bg-[var(--danger-soft)] text-[var(--danger)] border-[color-mix(in_srgb,var(--danger)_35%,transparent)] shadow-[0_4px_16px_-8px_color-mix(in_srgb,var(--danger)_50%,transparent)]`,
 
-  neutral: `${base} bg-[var(--surface-sunken)] text-[var(--text-muted)] border-[var(--border)]`,
+  neutral: `${base} bg-[var(--surface-sunken)] text-[var(--text-muted)] border-[var(--border)] shadow-[inset_0_1px_0_var(--edge)]`,
 }
 
 export const subscriptionStatusStyles: Record<string, string> = {

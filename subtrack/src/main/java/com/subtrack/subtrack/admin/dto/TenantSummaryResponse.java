@@ -8,6 +8,7 @@ public record TenantSummaryResponse(
         String organizationName,
         String planName,
         String subscriptionStatus,
+        String organizationStatus,
         Instant createdAt
 ) {
 }

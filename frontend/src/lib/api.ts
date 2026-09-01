@@ -138,6 +138,10 @@ export type Subscription = {
   status: "TRIAL" | "ACTIVE" | "PAST_DUE" | "CANCELED"
   currentPeriodStart: string
   currentPeriodEnd: string
+  nextBillingDate?: string
+  autopayEnabled?: boolean
+  scheduledPlan?: Plan | null
+  pendingPlan?: Plan | null
 }
 
 export async function getCurrentSubscription(): Promise<Subscription> {
@@ -146,9 +150,18 @@ export async function getCurrentSubscription(): Promise<Subscription> {
   return data
 }
 
+export async function cancelPlanChange(): Promise<Subscription> {
+  const { data } = await api.post<Subscription>(
+    "/api/subscriptions/change-plan/cancel"
+  )
+
+  return data
+}
+
 export type ChangePlanResponse = {
   subscription: Subscription
   upgradeInvoice: Invoice | null
+  scheduled: boolean
 }
 
 export async function changePlan(
@@ -298,6 +311,7 @@ export type TenantSummary = {
   organizationName: string
   planName: string
   subscriptionStatus: string
+  organizationStatus: string
   createdAt: string
 }
 

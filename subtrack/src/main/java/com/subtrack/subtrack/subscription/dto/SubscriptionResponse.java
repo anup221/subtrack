@@ -13,6 +13,8 @@ public record SubscriptionResponse(
         Instant currentPeriodStart,
         Instant currentPeriodEnd,
         Instant nextBillingDate,
-        boolean autopayEnabled
+        boolean autopayEnabled,
+        PlanResponse scheduledPlan,
+        PlanResponse pendingPlan
 ) {
 }

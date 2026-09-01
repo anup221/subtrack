@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { useSearchParams } from "react-router-dom"
 
 import {
@@ -15,11 +15,11 @@ import {
 } from "lucide-react"
 
 import {
+  getCurrentSubscription,
   createRazorpayOrder,
   getInvoices,
   getPayments,
   verifyRazorpayPayment,
-  type Invoice,
 } from "@/lib/api"
 
 import { Card } from "@/components/ui/card"
@@ -35,13 +35,21 @@ export default function BillingPage() {
   const queryClient = useQueryClient()
   const [searchParams] = useSearchParams()
 
-  const [selected, setSelected] =
-    useState<Invoice | null>(null)
+  const [selectedId, setSelectedId] = useState<string | null>(
+    () => searchParams.get("invoice")
+  )
 
   const [
     razorpayLoading,
     setRazorpayLoading,
   ] = useState<string | null>(null)
+
+  const {
+    data: subscription,
+  } = useQuery({
+    queryKey: ["subscription"],
+    queryFn: getCurrentSubscription,
+  })
 
   const {
     data: invoices,
@@ -51,24 +59,21 @@ export default function BillingPage() {
     queryFn: getInvoices,
   })
 
-  const {
+const {
     data: payments,
   } = useQuery({
     queryKey: [
       "payments",
-      selected?.id,
+      selectedId,
     ],
     queryFn: () =>
-      getPayments(selected!.id),
-    enabled: !!selected,
+      getPayments(selectedId!),
+    enabled: !!selectedId,
   })
 
-  useEffect(() => {
-    const requestedInvoice = searchParams.get("invoice")
-    if (requestedInvoice && invoices) {
-      setSelected(invoices.find((invoice) => invoice.id === requestedInvoice) ?? null)
-    }
-  }, [invoices, searchParams])
+  const selected = invoices?.find(
+    (invoice) => invoice.id === selectedId
+  ) ?? null
 
   async function payWithRazorpay(
     invoiceId: string
@@ -108,7 +113,7 @@ export default function BillingPage() {
            * Does not affect payment functionality.
            */
           theme: {
-            color: "#ff6659",
+            color: "#8b6bff",
           },
 
           handler:
@@ -184,6 +189,31 @@ export default function BillingPage() {
         title="Billing"
         description="Invoices and payment history for your organization only."
       />
+
+      {/* SCHEDULED PLAN CHANGE */}
+
+      {subscription?.scheduledPlan && (
+        <div className="rounded-xl border border-[var(--st-border)] bg-[var(--st-surface)] px-5 py-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--st-success)]/30 bg-[var(--st-success)]/10">
+              <Receipt size={14} className="text-[var(--st-success)]" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-[var(--st-text)]">
+                Plan change scheduled
+              </p>
+              <p className="mt-0.5 text-xs text-[var(--st-text-muted)]">
+                Your subscription will switch to{" "}
+                <span className="font-semibold text-[var(--st-text)]">
+                  {subscription.scheduledPlan.name}
+                </span>{" "}
+                at the start of the next billing cycle on{" "}
+                {new Date(subscription.currentPeriodEnd).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* --------------------------------
           EMPTY STATE
@@ -277,8 +307,8 @@ export default function BillingPage() {
                       <div
                         key={invoice.id}
                         onClick={() =>
-                          setSelected(
-                            invoice
+                          setSelectedId(
+                            invoice.id
                           )
                         }
                         className={`
@@ -500,7 +530,7 @@ export default function BillingPage() {
               variant="ghost"
               size="sm"
               onClick={() =>
-                setSelected(null)
+                setSelectedId(null)
               }
               className="gap-2"
             >

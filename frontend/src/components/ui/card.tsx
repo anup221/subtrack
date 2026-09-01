@@ -8,13 +8,16 @@ export function Card({
   return (
     <div
       className={cn(
-        "rounded-xl border border-[var(--st-border)]",
+        "group/card relative rounded-2xl",
+        "border border-[var(--st-border)]",
         "bg-[var(--st-surface)]",
+        // top-edge highlight — the "lit hairline"
+        "shadow-[inset_0_1px_0_var(--edge),var(--st-shadow-sm)]",
         "p-6",
-        "shadow-[0_1px_2px_rgba(0,0,0,0.10)]",
-        "transition-[border-color,background-color,box-shadow,transform]",
+        "transition-[border-color,box-shadow,transform,background-color]",
         "duration-200",
-        "hover:border-[var(--st-border-strong)]",
+        "hover:border-[color-mix(in_srgb,var(--accent)_28%,var(--border))]",
+        "hover:shadow-[inset_0_1px_0_var(--edge),var(--st-shadow-md)]",
         className
       )}
       {...props}
@@ -106,6 +109,7 @@ export function CardLabel({
       className={cn(
         "text-[10px] font-medium uppercase",
         "tracking-[0.16em]",
+        "font-mono",
         "text-[var(--st-text-faint)]",
         className
       )}
@@ -121,7 +125,7 @@ export function CardValue({
   return (
     <p
       className={cn(
-        "text-2xl font-semibold",
+        "numeric text-2xl font-semibold",
         "tracking-[-0.035em]",
         "text-[var(--st-text)]",
         className

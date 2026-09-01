@@ -1,48 +1,62 @@
-import { Sun, Moon } from "lucide-react"
+import { useState } from "react"
+import { Moon, Sun } from "lucide-react"
 import { useThemeStore } from "@/store/themeStore"
+import { cn } from "@/lib/utils"
 
-export function ThemeToggle() {
+export function ThemeToggle({
+  className,
+  size = "md",
+}: {
+  className?: string
+  size?: "sm" | "md"
+}) {
   const theme = useThemeStore((s) => s.theme)
   const toggleTheme = useThemeStore((s) => s.toggleTheme)
 
+  const [spinning, setSpinning] = useState(false)
+
   const isDark = theme === "dark"
+
+  function handleToggle() {
+    setSpinning(true)
+    toggleTheme()
+    window.setTimeout(() => setSpinning(false), 350)
+  }
 
   return (
     <button
-      onClick={toggleTheme}
-      className={[
-        "group",
-        "flex",
-        "w-full",
-        "items-center",
-        "justify-between",
-        "rounded-lg",
-        "border",
-        "border-[var(--st-border)]",
-        "bg-[var(--st-surface)]",
-        "px-3",
-        "py-2.5",
-        "text-sm",
+      type="button"
+      onClick={handleToggle}
+      aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
+      title={isDark ? "Switch to light mode" : "Switch to dark mode"}
+      className={cn(
+        "group relative inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full transition-all duration-200",
+        "border border-[var(--st-border)]",
         "text-[var(--st-text-muted)]",
-        "transition-all",
-        "duration-200",
-        "hover:border-[var(--st-border-strong)]",
-        "hover:bg-[var(--st-surface-hover)]",
-        "hover:text-[var(--st-text)]",
-      ].join(" ")}
-      aria-label="Toggle theme"
+        "hover:border-[var(--st-border-strong)] hover:bg-[var(--st-surface-hover)] hover:text-[var(--st-text)]",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--st-action)]",
+        size === "sm" ? "h-8 w-8" : "h-9 w-9",
+        className
+      )}
     >
-      <span>
-        {isDark
-          ? "Switch to light"
-          : "Switch to dark"}
-      </span>
-
-      <span className="flex h-7 w-7 items-center justify-center rounded-md border border-[var(--st-border)] bg-[var(--st-bg)] transition-transform duration-200 group-hover:scale-105">
+      <span
+        className={cn(
+          "pointer-events-none transition-all duration-300",
+          spinning && "rotate-[360deg] scale-75"
+        )}
+      >
         {isDark ? (
-          <Sun size={14} />
+          <Sun
+            size={size === "sm" ? 15 : 17}
+            strokeWidth={1.8}
+            className="transition-colors"
+          />
         ) : (
-          <Moon size={14} />
+          <Moon
+            size={size === "sm" ? 15 : 17}
+            strokeWidth={1.8}
+            className="transition-colors"
+          />
         )}
       </span>
     </button>

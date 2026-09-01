@@ -74,16 +74,24 @@ public class AdminService {
                 : (canceledCount * 100.0)
                 / allSubscriptions.size();
 
+        long liveOrgCount = organizationRepository.findAll()
+                .stream()
+                .filter(org -> !"DELETED".equals(org.getStatus()))
+                .count();
+
         return new AdminMetricsResponse(
                 mrrCents,
-                (int) organizationRepository.count(),
+                (int) liveOrgCount,
                 (int) activeCount,
                 Math.round(churnRate * 10.0) / 10.0
         );
     }
 
     /**
-     * Returns a summary of every organization on the platform.
+     * Returns a summary of every non-deleted organization on the platform.
+     *
+     * Removed (DELETED) organizations are filtered out so the admin tenant
+     * list only shows live workspaces.
      */
     public List<TenantSummaryResponse> listTenants() {
 
@@ -104,6 +112,7 @@ public class AdminService {
 
         return organizationRepository.findAll()
                 .stream()
+                .filter(org -> !"DELETED".equals(org.getStatus()))
                 .map(org -> {
 
                     Subscription sub = subsByOrg.get(org.getId());
@@ -121,6 +130,9 @@ public class AdminService {
                             sub != null
                                     ? sub.getStatus().name()
                                     : "NONE",
+                            org.getStatus() != null
+                                    ? org.getStatus()
+                                    : "ACTIVE",
                             org.getCreatedAt()
                     );
                 })

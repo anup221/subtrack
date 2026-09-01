@@ -1,6 +1,7 @@
 package com.subtrack.subtrack.config;
 
 import com.subtrack.subtrack.auth.JwtAuthFilter;
+import com.subtrack.subtrack.auth.OAuthFailureHandler;
 import com.subtrack.subtrack.auth.OAuthSuccessHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -29,6 +30,7 @@ public class SecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
     private final OAuthSuccessHandler oAuthSuccessHandler;
+    private final OAuthFailureHandler oAuthFailureHandler;
 
     @Value("${app.frontend-url:http://localhost:5173}")
     private String frontendUrl;
@@ -50,7 +52,9 @@ public class SecurityConfig {
                                 "/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
                         .anyRequest().authenticated()
                 )
-                .oauth2Login(oauth2 -> oauth2.successHandler(oAuthSuccessHandler))
+                .oauth2Login(oauth2 -> oauth2
+                        .successHandler(oAuthSuccessHandler)
+                        .failureHandler(oAuthFailureHandler))
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }

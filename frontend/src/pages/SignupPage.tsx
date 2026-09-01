@@ -2,7 +2,7 @@ import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
-import { Link, useNavigate } from "react-router-dom"
+import { Link, useNavigate, useSearchParams } from "react-router-dom"
 import {
   ArrowLeft,
   ArrowRight,
@@ -11,7 +11,7 @@ import {
   EyeOff,
 } from "lucide-react"
 
-import { signup } from "@/lib/api"
+import { signup, googleOrgLoginUrl } from "@/lib/api"
 import { useAppStore } from "@/store/appStore"
 
 import { Input } from "@/components/ui/input"
@@ -34,8 +34,34 @@ const schema = z.object({
 
 type FormData = z.infer<typeof schema>
 
+function GoogleIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden>
+      <path
+        fill="#4285F4"
+        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.27-4.74 3.27-8.1z"
+      />
+      <path
+        fill="#34A853"
+        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84A11 11 0 0 0 12 23z"
+      />
+      <path
+        fill="#FBBC05"
+        d="M5.84 14.1a6.6 6.6 0 0 1 0-4.2V7.06H2.18a11 11 0 0 0 0 9.88l3.66-2.84z"
+      />
+      <path
+        fill="#EA4335"
+        d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1A11 11 0 0 0 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+      />
+    </svg>
+  )
+}
+
 export default function SignupPage() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+
+  const oauthErrorParam = searchParams.get("oauth")
 
   const setSession = useAppStore(
     (state) => state.setSession
@@ -45,7 +71,11 @@ export default function SignupPage() {
     useState(false)
 
   const [submitError, setSubmitError] =
-    useState("")
+    useState(
+      oauthErrorParam === "error"
+        ? "Google sign-in could not be completed. Please create a workspace with your email and password."
+        : ""
+    )
 
   const {
     register,
@@ -89,7 +119,7 @@ export default function SignupPage() {
             to="/"
             className="flex items-center gap-2.5"
           >
-            <span className="flex h-7 w-7 items-center justify-center rounded-[var(--radius)] bg-[var(--action)] font-mono text-[13px] font-medium text-[var(--action-text)]">
+            <span className="st-logo-mark st-logo-glyph h-8 w-8 rounded-lg text-[14px]">
               S
             </span>
 
@@ -148,9 +178,10 @@ export default function SignupPage() {
                   key={item}
                   className="flex items-center gap-3 text-sm text-[var(--text-muted)]"
                 >
-                  <span className="flex h-5 w-5 items-center justify-center rounded-full border border-[var(--border-strong)]">
+                  <span className="flex h-5 w-5 items-center justify-center rounded-full border border-[color-mix(in_srgb,var(--accent)_30%,transparent)] bg-[var(--accent-soft)]">
                     <Check
                       size={11}
+                      strokeWidth={3}
                       className="text-[var(--accent)]"
                     />
                   </span>
@@ -322,6 +353,11 @@ export default function SignupPage() {
                 )}
               </Button>
             </form>
+
+            <Button type="button" variant="outline" className="mt-3 w-full" onClick={() => { window.location.href = googleOrgLoginUrl() }}>
+              <GoogleIcon />
+              Continue with Google
+            </Button>
 
             {/* Login */}
             <div className="mt-8 border-t border-[var(--border)] pt-6 text-center">

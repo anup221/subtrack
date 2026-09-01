@@ -12,6 +12,7 @@ import {
 import { useNavigate } from "react-router-dom"
 
 import { Button } from "@/components/ui/button"
+import { ThemeToggle } from "@/components/ui/theme-toggle"
 
 const features = [
   {
@@ -62,50 +63,66 @@ export default function App() {
   const navigate = useNavigate()
 
   return (
-    <div className="min-h-screen bg-[var(--st-bg)] text-[var(--st-text)]">
+    <div className="relative min-h-screen overflow-x-clip bg-[var(--st-bg)] text-[var(--st-text)]">
+
+      {/* AMBIENT LIGHT (subtle, static) */}
+      <div
+        className="pointer-events-none absolute inset-x-0 top-0 -z-0 h-[520px]"
+        aria-hidden
+        style={{
+          background:
+            "radial-gradient(58% 55% at 50% 0%, var(--accent-2) 0%, transparent 68%)",
+          opacity: 0.09,
+        }}
+      />
 
       {/* NAVIGATION */}
 
-      <nav className="mx-auto flex max-w-7xl items-center justify-between px-6 py-6 md:px-10">
+      <nav className="sticky top-0 z-50 bg-[color-mix(in_srgb,var(--background)_78%,transparent)] backdrop-blur-xl">
+        <div className="border-b border-[var(--border)]/80">
+          <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4 md:px-10">
 
-        <button
-          type="button"
-          onClick={() => navigate("/")}
-          className="flex items-center gap-3"
-        >
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[var(--st-text)] text-[var(--st-bg)]">
-            <span className="font-serif text-lg">
-              S
-            </span>
-          </div>
+            <button
+              type="button"
+              onClick={() => navigate("/")}
+              className="flex items-center gap-3"
+            >
+              <div className="st-logo-mark st-logo-glyph h-9 w-9 rounded-xl text-base">
+                S
+              </div>
 
-          <div className="text-left">
-            <div className="text-sm font-semibold">
-              SubTrack
+              <div className="text-left">
+                <div className="display text-[15px] tracking-[-0.02em]">
+                  SubTrack
+                </div>
+
+                <div className="eyebrow mt-1 hidden sm:block">
+                  Billing infrastructure
+                </div>
+              </div>
+            </button>
+
+            <div className="flex items-center gap-2">
+
+              <ThemeToggle />
+
+              <Button
+                variant="ghost"
+                className="hidden sm:inline-flex"
+                onClick={() => navigate("/login")}
+              >
+                Log in
+              </Button>
+
+              <Button
+                onClick={() => navigate("/signup")}
+              >
+                Get started
+                <ArrowRight size={15} />
+              </Button>
+
             </div>
-
-            <div className="eyebrow mt-1 hidden sm:block">
-              Billing infrastructure
-            </div>
           </div>
-        </button>
-
-        <div className="flex items-center gap-2">
-
-          <Button
-            variant="ghost"
-            onClick={() => navigate("/login")}
-          >
-            Log in
-          </Button>
-
-          <Button
-            onClick={() => navigate("/signup")}
-          >
-            Get started
-            <ArrowRight size={15} />
-          </Button>
-
         </div>
       </nav>
 
@@ -115,18 +132,18 @@ export default function App() {
 
         <div className="max-w-5xl">
 
-          <div className="mb-7 flex items-center gap-3">
-            <div className="h-px w-8 bg-[var(--st-accent)]" />
+          <div className="mb-7 inline-flex items-center gap-2.5 rounded-full border border-[color-mix(in_srgb,var(--accent)_30%,transparent)] bg-[var(--accent-soft)] px-4 py-1.5 shadow-[0_8px_24px_-10px_color-mix(in_srgb,var(--accent)_45%,transparent)]">
+            <span className="h-1.5 w-1.5 rounded-full bg-[var(--accent)]" />
 
-            <span className="eyebrow text-[var(--st-accent)]">
+            <span className="eyebrow text-[var(--accent)]">
               SaaS billing infrastructure
             </span>
           </div>
 
-          <h1 className="display text-6xl leading-[0.92] sm:text-7xl md:text-8xl lg:text-9xl">
+          <h1 className="display text-6xl leading-[0.94] sm:text-7xl md:text-8xl lg:text-9xl">
             Billing
             <br />
-            <span className="text-[var(--st-text-muted)]">
+            <span className="st-gradient-text">
               without the noise.
             </span>
           </h1>
@@ -169,10 +186,13 @@ export default function App() {
                 key={item}
                 className="flex items-center gap-2 text-xs text-[var(--st-text-muted)]"
               >
-                <Check
-                  size={13}
-                  className="text-[var(--st-accent)]"
-                />
+                <span className="flex h-4 w-4 items-center justify-center rounded-full bg-[var(--accent-soft)]">
+                  <Check
+                    size={10}
+                    strokeWidth={3}
+                    className="text-[var(--accent)]"
+                  />
+                </span>
 
                 {item}
               </div>
@@ -185,21 +205,23 @@ export default function App() {
 
       {/* STATEMENT */}
 
-      <section className="border-y border-[var(--st-border)] bg-[var(--st-surface)]">
+      <section className="border-y border-[var(--border)] bg-[color-mix(in_srgb,var(--surface)_70%,transparent)] backdrop-blur-sm">
 
         <div className="mx-auto grid max-w-7xl md:grid-cols-3">
 
-          <div className="border-b border-[var(--st-border)] p-8 md:border-b-0 md:border-r md:p-10">
+          <div className="border-b border-[var(--border)] p-8 md:border-b-0 md:border-r md:p-10">
             <span className="eyebrow">
               The idea
             </span>
 
-            <h2 className="display mt-5 text-3xl leading-tight">
-              Make the complex parts feel simple.
+            <h2 className="display mt-5 text-[28px] leading-tight tracking-[-0.03em] md:text-3xl">
+              Make the complex parts
+              <br className="hidden md:block" />
+              {" "}feel <span className="st-gradient-text">simple.</span>
             </h2>
           </div>
 
-          <div className="border-b border-[var(--st-border)] p-8 md:border-b-0 md:border-r md:p-10">
+          <div className="border-b border-[var(--border)] p-8 md:border-b-0 md:border-r md:p-10">
             <span className="eyebrow">
               For developers
             </span>
@@ -233,20 +255,20 @@ export default function App() {
         <div className="mb-14 max-w-2xl">
 
           <div className="mb-5 flex items-center gap-3">
-            <div className="h-px w-8 bg-[var(--st-accent)]" />
+            <span className="h-px w-10 bg-[var(--accent-gradient)]" />
 
             <span className="eyebrow">
               Built for the real thing
             </span>
           </div>
 
-          <h2 className="display text-5xl leading-none md:text-6xl">
+          <h2 className="display text-[40px] leading-[1.02] tracking-[-0.04em] md:text-[54px]">
             Everything your billing layer needs.
           </h2>
 
         </div>
 
-        <div className="grid overflow-hidden border border-[var(--st-border)] md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
 
           {features.map((feature) => {
             const Icon = feature.icon
@@ -254,20 +276,22 @@ export default function App() {
             return (
               <article
                 key={feature.title}
-                className="group border-b border-r border-[var(--st-border)] bg-[var(--st-surface)] p-8 transition-colors duration-200 hover:bg-[var(--st-surface-hover)]"
+                className="group relative overflow-hidden rounded-xl border border-[var(--st-border)] bg-[var(--st-surface)] p-7 shadow-[inset_0_1px_0_var(--edge),var(--st-shadow-sm)] transition-all duration-200 hover:-translate-y-1 hover:border-[var(--accent-border)] hover:shadow-[inset_0_1px_0_var(--edge),var(--st-shadow-md)]"
               >
 
-                <div className="flex items-start justify-between">
+                <div className="relative flex items-start justify-between">
 
                   <span className="mono text-[10px] text-[var(--st-text-faint)]">
                     {feature.number}
                   </span>
 
-                  <Icon
-                    size={19}
-                    strokeWidth={1.7}
-                    className="text-[var(--st-accent)] transition-transform duration-200 group-hover:scale-110"
-                  />
+                  <span className="st-accent-chip h-10 w-10 rounded-lg">
+                    <Icon
+                      size={18}
+                      strokeWidth={1.8}
+                      className="transition-transform duration-200 group-hover:scale-110"
+                    />
+                  </span>
 
                 </div>
 
@@ -279,7 +303,7 @@ export default function App() {
                   {feature.description}
                 </p>
 
-                <div className="mt-8 h-px w-0 bg-[var(--st-accent)] transition-all duration-300 group-hover:w-10" />
+                <div className="mt-8 h-px w-0 bg-[var(--accent-gradient)] transition-all duration-300 group-hover:w-10" />
 
               </article>
             )
@@ -293,27 +317,35 @@ export default function App() {
 
       <section className="mx-auto max-w-7xl px-6 pb-28 md:px-10">
 
-        <div className="border border-[var(--st-border)] bg-[var(--st-surface)] p-8 md:p-14">
+        <div className="relative overflow-hidden rounded-2xl border border-[var(--accent-border)] bg-[var(--st-surface)] p-8 shadow-[inset_0_1px_0_var(--edge),var(--st-shadow-md)] md:p-14">
 
-          <span className="eyebrow text-[var(--st-accent)]">
-            Start with SubTrack
-          </span>
+          <div
+            className="pointer-events-none absolute inset-y-0 right-0 w-[40%] bg-[var(--accent-gradient-soft)] blur-2xl"
+            aria-hidden
+          />
 
-          <h2 className="display mt-6 max-w-3xl text-5xl leading-none md:text-7xl">
-            Build the billing layer
-            your product deserves.
-          </h2>
+          <div className="relative">
+            <span className="eyebrow text-[var(--accent)]">
+              Start with SubTrack
+            </span>
 
-          <div className="mt-8">
+            <h2 className="display mt-6 max-w-3xl text-[40px] leading-[1.02] tracking-[-0.04em] md:text-6xl">
+              Build the billing layer
+              <br className="hidden md:block" />
+              {" "}your product deserves.
+            </h2>
 
-            <Button
-              size="lg"
-              onClick={() => navigate("/signup")}
-            >
-              Create your workspace
-              <ArrowRight size={16} />
-            </Button>
+            <div className="mt-8">
 
+              <Button
+                size="lg"
+                onClick={() => navigate("/signup")}
+              >
+                Create your workspace
+                <ArrowRight size={16} />
+              </Button>
+
+            </div>
           </div>
 
         </div>
@@ -322,12 +354,12 @@ export default function App() {
 
       {/* FOOTER */}
 
-      <footer className="border-t border-[var(--st-border)]">
+      <footer className="border-t border-[var(--border)]">
 
         <div className="mx-auto flex max-w-7xl flex-col gap-3 px-6 py-8 md:flex-row md:items-center md:justify-between md:px-10">
 
           <div>
-            <p className="text-sm font-semibold">
+            <p className="display text-[15px] tracking-[-0.02em]">
               SubTrack
             </p>
 

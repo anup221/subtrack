@@ -1,3 +1,5 @@
+/* eslint-disable react-refresh/only-export-components */
+
 import { createBrowserRouter, Navigate } from "react-router-dom"
 import type { ReactNode } from "react"
 
@@ -13,10 +15,12 @@ import DashboardHome from "@/pages/DashboardHome"
 import UsagePage from "@/pages/UsagePage"
 import BillingPage from "@/pages/BillingPage"
 import AdminOverview from "@/pages/AdminOverview"
+import AdminTenants from "@/pages/AdminTenants"
 import AdminTenantDetail from "@/pages/AdminTenantDetail"
 import OrganizationPage from "@/pages/OrganizationPage"
 
 import { DashboardLayout } from "@/components/layout/DashboardLayout"
+import { AdminLayout } from "@/components/layout/AdminLayout"
 import { useAppStore } from "@/store/appStore"
 
 
@@ -91,12 +95,15 @@ function AdminRoute({ children }: { children: ReactNode }) {
   /*
    * Only a PLATFORM_ADMIN session can access
    * the platform administration area.
+   *
+   * The admin UI lives in its own AdminLayout — completely
+   * separate from the organization dashboard.
    */
   if (!isPlatformAdmin) {
     return <Navigate to="/dashboard" replace />
   }
 
-  return <DashboardLayout>{children}</DashboardLayout>
+  return <AdminLayout>{children}</AdminLayout>
 }
 
 
@@ -191,7 +198,7 @@ export const router = createBrowserRouter([
 
 
   /* ==========================================================
-     PLATFORM ADMIN
+     PLATFORM ADMIN (separate console)
   ========================================================== */
 
   {
@@ -204,11 +211,29 @@ export const router = createBrowserRouter([
   },
 
   {
+    path: "/admin/tenants",
+    element: (
+      <AdminRoute>
+        <AdminTenants />
+      </AdminRoute>
+    ),
+  },
+
+  {
     path: "/admin/tenants/:organizationId",
     element: (
       <AdminRoute>
         <AdminTenantDetail />
       </AdminRoute>
     ),
+  },
+
+  /* ==========================================================
+     FALLBACK
+  ========================================================== */
+
+  {
+    path: "*",
+    element: <Navigate to="/" replace />,
   },
 ])

@@ -14,52 +14,55 @@ export interface ButtonProps
 }
 
 const variantStyles: Record<string, string> = {
-  default:
-    [
-      "bg-[var(--st-action)]",
-      "text-[var(--st-action-text)]",
-      "shadow-sm",
-      "hover:bg-[var(--st-action-hover)]",
-      "active:translate-y-px",
-    ].join(" "),
+  default: [
+    "st-btn-primary",
+  ].join(" "),
 
-  destructive:
-    [
-      "bg-[var(--st-danger)]",
-      "text-white",
-      "hover:brightness-95",
-    ].join(" "),
+  destructive: [
+    "bg-[var(--st-danger)]",
+    "text-white",
+    "shadow-[0_8px_24px_-10px_color-mix(in_srgb,var(--st-danger)_55%,transparent)]",
+    "hover:brightness-95",
+    "hover:-translate-y-px",
+    "active:translate-y-px",
+  ].join(" "),
 
-  outline:
-    [
-      "border border-[var(--st-border-strong)]",
-      "bg-transparent",
-      "text-[var(--st-text)]",
-      "hover:bg-[var(--st-surface-hover)]",
-    ].join(" "),
+  outline: [
+    "border border-[var(--st-border-strong)]",
+    "bg-[color-mix(in_srgb,var(--surface)_70%,transparent)]",
+    "text-[var(--st-text)]",
+    "shadow-[inset_0_1px_0_var(--edge)]",
+    "backdrop-blur-md",
+    "hover:bg-[var(--st-surface-hover)]",
+    "hover:border-[color-mix(in_srgb,var(--accent)_45%,transparent)]",
+    "hover:shadow-[0_8px_24px_-12px_color-mix(in_srgb,var(--accent)_35%,transparent)]",
+    "hover:-translate-y-px",
+    "active:translate-y-px",
+  ].join(" "),
 
-  secondary:
-    [
-      "bg-[var(--st-surface-hover)]",
-      "text-[var(--st-text)]",
-      "hover:bg-[var(--st-border)]",
-    ].join(" "),
+  secondary: [
+    "bg-[var(--st-surface-hover)]",
+    "text-[var(--st-text)]",
+    "border border-[var(--st-border)]",
+    "shadow-[inset_0_1px_0_var(--edge)]",
+    "hover:bg-[var(--st-border-strong)]",
+    "hover:-translate-y-px",
+    "active:translate-y-px",
+  ].join(" "),
 
-  ghost:
-    [
-      "bg-transparent",
-      "text-[var(--st-text-muted)]",
-      "hover:bg-[var(--st-surface-hover)]",
-      "hover:text-[var(--st-text)]",
-    ].join(" "),
+  ghost: [
+    "bg-transparent",
+    "text-[var(--st-text-muted)]",
+    "hover:bg-[var(--st-surface-hover)]",
+    "hover:text-[var(--st-text)]",
+  ].join(" "),
 
-  link:
-    [
-      "bg-transparent",
-      "text-[var(--st-action)]",
-      "underline-offset-4",
-      "hover:underline",
-    ].join(" "),
+  link: [
+    "bg-transparent",
+    "text-[var(--st-action)]",
+    "underline-offset-4",
+    "hover:underline",
+  ].join(" "),
 }
 
 const sizeStyles: Record<string, string> = {
@@ -84,12 +87,15 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         ref={ref}
         className={cn(
           "inline-flex items-center justify-center gap-2",
-          "rounded-lg",
+          "rounded-xl",
           "text-sm font-medium",
           "transition-all duration-150",
+          "active:scale-[0.98]",
           "focus-visible:outline-none",
           "focus-visible:ring-2",
           "focus-visible:ring-[var(--st-action)]",
+          "focus-visible:ring-offset-2",
+          "focus-visible:ring-offset-[var(--background)]",
           "disabled:pointer-events-none",
           "disabled:opacity-50",
           variantStyles[variant],

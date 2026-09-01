@@ -23,15 +23,16 @@ export function Input({
   return (
     <input
       className={cn(
-        "w-full rounded-[var(--radius)] border border-[var(--border-strong)]",
-        "bg-[var(--surface)] px-3.5 py-2.5 text-sm text-[var(--text)]",
+        "w-full rounded-xl border border-[var(--border-strong)]",
+        "bg-[var(--surface-raised)] px-3.5 py-2.5 text-sm text-[var(--text)]",
         "placeholder:text-[var(--text-faint)]",
-        "transition-colors",
-        "focus:border-[var(--text-faint)]",
+        "shadow-[inset_0_1px_0_var(--edge),inset_0_1px_3px_rgba(0,0,0,0.12)]",
+        "transition-all duration-150",
+        "hover:border-[var(--text-faint)]",
+        "focus:border-[var(--st-action)]",
+        "focus:bg-[var(--surface)]",
+        "focus:shadow-[0_0_0_4px_var(--ring),inset_0_1px_0_var(--edge)]",
         "focus:outline-none",
-        "focus-visible:outline-2",
-        "focus-visible:outline-[var(--ring)]",
-        "focus-visible:outline-offset-1",
         className
       )}
       {...props}

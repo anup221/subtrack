@@ -1,10 +1,10 @@
-import { useMemo, useState } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { useNavigate } from "react-router-dom"
 import {
+  ArrowRight,
   Building2,
   DollarSign,
-  Search,
+  ShieldCheck,
   TrendingDown,
   Users,
 } from "lucide-react"
@@ -15,25 +15,15 @@ import {
 } from "@/lib/api"
 
 import { Card } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
 import { PageHeader } from "@/components/ui/page-header"
 
 import {
   subscriptionStatusStyles,
 } from "@/lib/statusStyles"
 
-function initials(name: string) {
-  return name
-    .split(" ")
-    .map((word) => word[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase()
-}
-
 export default function AdminOverview() {
-  const [query, setQuery] = useState("")
   const navigate = useNavigate()
 
   const {
@@ -52,29 +42,7 @@ export default function AdminOverview() {
     queryFn: getAdminTenants,
   })
 
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase()
-
-    if (!q) return tenants ?? []
-
-    return (tenants ?? []).filter(
-      (tenant) =>
-        tenant.organizationName
-          .toLowerCase()
-          .includes(q) ||
-        tenant.planName
-          .toLowerCase()
-          .includes(q) ||
-        tenant.subscriptionStatus
-          .toLowerCase()
-          .includes(q)
-    )
-  }, [tenants, query])
-
-  if (
-    metricsLoading ||
-    tenantsLoading
-  ) {
+  if (metricsLoading || tenantsLoading) {
     return (
       <div className="space-y-4">
         <div className="h-4 w-32 animate-pulse rounded bg-[var(--st-surface-hover)]" />
@@ -86,249 +54,172 @@ export default function AdminOverview() {
   const stats = [
     {
       label: "Monthly recurring revenue",
-      shortLabel: "MRR",
-      value: `$${(
-        (metrics?.mrrCents ?? 0) /
-        100
-      ).toFixed(2)}`,
+      value: `$${((metrics?.mrrCents ?? 0) / 100).toFixed(2)}`,
       icon: DollarSign,
+      context: "Plans + scheduled renewals",
     },
     {
       label: "Organizations",
-      shortLabel: "Organizations",
-      value:
-        metrics?.totalOrganizations ?? 0,
+      value: metrics?.totalOrganizations ?? 0,
       icon: Building2,
+      context: "Excludes deleted workspaces",
     },
     {
       label: "Active subscriptions",
-      shortLabel: "Active subscriptions",
-      value:
-        metrics?.activeSubscriptions ?? 0,
+      value: metrics?.activeSubscriptions ?? 0,
       icon: Users,
+      context: "Billed this cycle",
     },
     {
       label: "Churn rate",
-      shortLabel: "Churn rate",
       value: `${metrics?.churnRatePercent ?? 0}%`,
       icon: TrendingDown,
+      context: "Of all-time subscriptions",
     },
   ]
 
-  return (
-    <div className="mx-auto max-w-6xl space-y-10 pb-12">
+  const recentTenants = tenants?.slice(0, 4) ?? []
 
+  return (
+    <div className="space-y-10 pb-12">
       <PageHeader
         eyebrow="Platform admin"
         title="Admin console"
         description="Monitor the health of your billing platform across every organization."
+        actions={
+          <Button onClick={() => navigate("/admin/tenants")}>
+            Manage tenants
+            <ArrowRight size={15} />
+          </Button>
+        }
       />
 
       {/* METRICS */}
-
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat) => (
-          <Card key={stat.label}>
+          <Card
+            key={stat.label}
+            className="group p-5"
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0">
+                <p className="eyebrow truncate">{stat.label}</p>
 
-            <div className="flex items-start justify-between">
-
-              <div>
-
-                <p className="eyebrow">
-                  {stat.shortLabel}
-                </p>
-
-                <p className="mt-5 text-3xl font-semibold tracking-[-0.045em]">
+                <p className="st-tabular mt-4 text-[28px] font-semibold tracking-[-0.045em] text-[var(--st-text)]">
                   {stat.value}
                 </p>
-
               </div>
 
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-[var(--st-border)] bg-[var(--st-surface-raised)]">
-
-                <stat.icon
-                  size={16}
-                  className="text-[var(--st-action)]"
-                />
-
+              <div className="st-accent-chip h-9 w-9 shrink-0 rounded-lg">
+                <stat.icon size={16} strokeWidth={1.9} />
               </div>
-
             </div>
 
+            <div className="mt-5 flex items-center justify-between border-t border-[var(--st-border)] pt-3">
+              <p className="text-[11px] text-[var(--st-text-faint)]">
+                {stat.context}
+              </p>
+              <span className="st-status-dot text-[var(--success)]" />
+            </div>
           </Card>
         ))}
-
       </div>
 
-      {/* DIRECTORY */}
-
+      {/* RECENT TENANTS */}
       <section>
-
-        <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-
+        <div className="mb-5 flex items-end justify-between gap-4">
           <div>
-
             <p className="eyebrow">
               Directory
             </p>
 
-            <h2 className="mt-2 text-2xl font-semibold tracking-[-0.035em]">
-              All tenants
+            <h2 className="display mt-1 text-[22px]">
+              Recently added organizations
             </h2>
-
-            <p className="mt-1 text-sm text-[var(--st-text-muted)]">
-              {filtered.length} organization
-              {filtered.length === 1
-                ? ""
-                : "s"}{" "}
-              shown
-            </p>
-
           </div>
 
-          <div className="relative w-full lg:w-72">
-
-            <Search
-              size={15}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--st-text-faint)]"
-            />
-
-            <Input
-              value={query}
-              onChange={(event) =>
-                setQuery(event.target.value)
-              }
-              placeholder="Search organizations..."
-              className="h-10 pl-9"
-            />
-
-          </div>
-
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate("/admin/tenants")}
+          >
+            View all
+            <ArrowRight size={14} />
+          </Button>
         </div>
 
         <Card className="overflow-hidden p-0">
-
-          {/* HEADER */}
-
-          <div className="hidden grid-cols-[minmax(220px,2fr)_1fr_1fr_1fr] border-b border-[var(--st-border)] bg-[var(--st-surface-raised)] px-5 py-3 text-[10px] font-medium uppercase tracking-[0.14em] text-[var(--st-text-faint)] md:grid">
-
+          <div className="hidden grid-cols-[minmax(220px,2fr)_1fr_1fr_1fr] items-center gap-6 border-b border-[var(--st-border)] bg-[var(--st-surface-raised)] px-5 py-3 text-[10px] font-medium uppercase tracking-[0.14em] text-[var(--st-text-faint)] md:grid">
             <span>Organization</span>
             <span>Plan</span>
             <span>Status</span>
             <span>Joined</span>
-
           </div>
 
-          {/* ROWS */}
-
-          {filtered.map((tenant) => (
-
-            <div
+          {recentTenants.map((tenant, index) => (
+            <button
               key={tenant.organizationId}
-              role="button"
-              tabIndex={0}
-              onClick={() => navigate(`/admin/tenants/${tenant.organizationId}`)}
-              onKeyDown={(event) => { if (event.key === "Enter") navigate(`/admin/tenants/${tenant.organizationId}`) }}
-              className="grid gap-3 border-b border-[var(--st-border)] px-5 py-4 last:border-0 hover:bg-[var(--st-surface-hover)] md:grid-cols-[minmax(220px,2fr)_1fr_1fr_1fr] md:items-center"
+              type="button"
+              onClick={() =>
+                navigate(`/admin/tenants/${tenant.organizationId}`)
+              }
+              className="block w-full text-left"
             >
+              <div
+                className={`grid grid-cols-[1fr_auto] items-center gap-3 px-5 py-4 text-left transition-colors hover:bg-[var(--st-surface-hover)] md:grid-cols-[minmax(220px,2fr)_1fr_1fr_1fr] md:items-center md:gap-6 ${
+                  index !== recentTenants.length - 1
+                    ? "border-b border-[var(--st-border)]"
+                    : ""
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-[var(--st-border)] bg-[var(--st-surface-raised)] font-mono text-[10px] font-semibold text-[var(--st-text-muted)]">
+                    {tenant.organizationName.slice(0, 2).toUpperCase()}
+                  </div>
 
-              <div className="flex items-center gap-3">
-
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-[var(--st-border)] bg-[var(--st-surface-raised)] text-xs font-semibold">
-                  {initials(
-                    tenant.organizationName
-                  )}
-                </div>
-
-                <div>
-
-                  <p className="text-sm font-medium">
+                  <span className="truncate text-sm font-medium text-[var(--st-text)]">
                     {tenant.organizationName}
-                  </p>
-
-                  <p className="mt-0.5 font-mono text-[10px] text-[var(--st-text-faint)]">
-                    {tenant.organizationId.slice(
-                      0,
-                      8
-                    )}
-                    ...
-                  </p>
-
+                  </span>
                 </div>
 
+                <span className="hidden text-sm text-[var(--st-text-muted)] md:block">
+                  {tenant.planName === "—" ? "No plan" : tenant.planName}
+                </span>
+
+                <span className="hidden md:block">
+                  <Badge
+                    className={
+                      subscriptionStatusStyles[tenant.subscriptionStatus] ??
+                      subscriptionStatusStyles.NONE
+                    }
+                  >
+                    {tenant.subscriptionStatus}
+                  </Badge>
+                </span>
+
+                <span className="hidden text-sm text-[var(--st-text-muted)] md:block">
+                  {new Date(tenant.createdAt).toLocaleDateString()}
+                </span>
               </div>
-
-              <div className="flex items-center justify-between md:block">
-
-                <span className="text-xs uppercase tracking-[0.1em] text-[var(--st-text-faint)] md:hidden">
-                  Plan
-                </span>
-
-                <span className="text-sm">
-                  {tenant.planName === "NONE"
-                    ? "—"
-                    : tenant.planName}
-                </span>
-
-              </div>
-
-              <div className="flex items-center justify-between md:block">
-
-                <span className="text-xs uppercase tracking-[0.1em] text-[var(--st-text-faint)] md:hidden">
-                  Status
-                </span>
-
-                <Badge
-                  className={
-                    subscriptionStatusStyles[
-                      tenant.subscriptionStatus
-                    ] ??
-                    subscriptionStatusStyles.NONE
-                  }
-                >
-                  {tenant.subscriptionStatus}
-                </Badge>
-
-              </div>
-
-              <div className="flex items-center justify-between md:block">
-
-                <span className="text-xs uppercase tracking-[0.1em] text-[var(--st-text-faint)] md:hidden">
-                  Joined
-                </span>
-
-                <span className="text-sm text-[var(--st-text-muted)]">
-                  {new Date(
-                    tenant.createdAt
-                  ).toLocaleDateString()}
-                </span>
-
-              </div>
-
-            </div>
-
+            </button>
           ))}
 
-          {filtered.length === 0 && (
-            <div className="px-6 py-16 text-center">
-
+          {recentTenants.length === 0 && (
+            <div className="px-6 py-12 text-center">
+              <ShieldCheck
+                size={20}
+                className="mx-auto mb-3 text-[var(--st-text-faint)]"
+              />
               <p className="text-sm font-medium">
-                No organizations found
+                No organizations yet
               </p>
-
               <p className="mt-1 text-sm text-[var(--st-text-muted)]">
-                Try a different organization,
-                plan, or status.
+                New workspaces will appear here.
               </p>
-
             </div>
           )}
-
         </Card>
-
       </section>
-
     </div>
   )
 }

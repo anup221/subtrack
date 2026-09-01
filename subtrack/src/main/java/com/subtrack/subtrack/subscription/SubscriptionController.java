@@ -30,6 +30,11 @@ public class SubscriptionController {
         return subscriptionService.changePlan(request);
     }
 
+    @PostMapping("/change-plan/cancel")
+    public SubscriptionResponse cancelPendingPlanChange() {
+        return subscriptionService.cancelPendingPlanChange();
+    }
+
     @PostMapping("/cancel")
     public SubscriptionResponse cancel() {
         return subscriptionService.cancel();

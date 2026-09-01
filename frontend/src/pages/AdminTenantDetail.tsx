@@ -13,7 +13,6 @@ import {
 import { api } from "@/lib/api"
 import { removeAdminTenant, setAdminTenantStatus } from "@/lib/api"
 import { useAppStore } from "@/store/appStore"
-import { DashboardLayout } from "@/components/layout/DashboardLayout"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
@@ -58,39 +57,53 @@ export default function AdminTenantDetail() {
 
   useEffect(() => {
     if (!organizationId) {
-      setError("Organization ID is missing")
-      setLoading(false)
       return
     }
 
+    let cancelled = false
+
     async function loadTenant() {
       try {
-        setLoading(true)
-        setError("")
-
         const { data } =
           await api.get<TenantDetailResponse>(
             `/api/admin/tenants/${organizationId}`
           )
 
-        setTenant(data)
-      } catch (err: any) {
-        const message =
-          err?.response?.data?.message ||
-          err?.response?.data ||
-          "Unable to load organization details"
+        if (!cancelled) {
+          setTenant(data)
+        }
+      } catch (err: unknown) {
+        if (!cancelled) {
+          const errData = (err as {
+            response?: {
+              data?: unknown
+            }
+          })?.response?.data
 
-        setError(
-          typeof message === "string"
-            ? message
-            : "Unable to load organization details"
-        )
+          const message =
+            typeof errData === "string"
+              ? errData
+              : (errData as { message?: string } | undefined)
+                  ?.message
+
+          setError(
+            typeof message === "string"
+              ? message
+              : "Unable to load organization details"
+          )
+        }
       } finally {
-        setLoading(false)
+        if (!cancelled) {
+          setLoading(false)
+        }
       }
     }
 
     loadTenant()
+
+    return () => {
+      cancelled = true
+    }
   }, [organizationId])
 
   if (!token) {
@@ -136,8 +149,7 @@ export default function AdminTenantDetail() {
   }
 
   return (
-    <DashboardLayout>
-      <div className="mx-auto w-full max-w-6xl">
+    <div className="mx-auto w-full max-w-6xl">
 
         {/* Header */}
         <div className="mb-8">
@@ -201,22 +213,29 @@ export default function AdminTenantDetail() {
           )}
         </div>
 
+        {/* Missing organization id */}
+        {!organizationId && (
+          <div className="rounded-xl border border-[var(--st-danger-border)] bg-[var(--danger-soft)] p-5 text-sm text-[var(--danger)]">
+            Organization ID is missing from the URL.
+          </div>
+        )}
+
         {/* Loading */}
-        {loading && (
+        {organizationId && loading && (
           <div className="rounded-xl border border-[var(--st-border)] bg-[var(--st-surface)] p-8 text-sm text-[var(--st-text-muted)]">
             Loading organization details...
           </div>
         )}
 
         {/* Error */}
-        {!loading && error && (
+        {organizationId && !loading && error && (
           <div className="rounded-xl border border-[color-mix(in_srgb,var(--danger)_35%,transparent)] bg-[var(--danger-soft)] p-5 text-sm text-[var(--danger)]">
             {error}
           </div>
         )}
 
         {/* Content */}
-        {!loading && !error && tenant && (
+        {organizationId && !loading && !error && tenant && (
           <div className="space-y-6">
 
             {/* Organization information */}
@@ -384,6 +403,5 @@ export default function AdminTenantDetail() {
           </div>
         )}
       </div>
-    </DashboardLayout>
   )
 }

@@ -1,26 +1,86 @@
 @import "tailwindcss";
 
+/* =========================================================
+   DESIGN TOKENS — AURORA / DARK (default)
+   A cool charcoal-navy shell with an electric
+   violet → indigo → cyan accent system, soft aurora
+   ambient light, and glassy edge-lit surfaces.
+========================================================= */
+
 :root {
-  --background: #0b0b0a;
-  --surface: #131311;
-  --surface-raised: #191917;
-  --surface-hover: #20201d;
+  /* Base shell */
+  --background: #07070c;
+  --surface: #0d0d15;
+  --surface-raised: #131320;
+  --surface-hover: #191927;
+  --surface-sunken: #0a0a11;
 
-  --border: #2b2b27;
-  --border-strong: #3b3b35;
+  --border: #1a1a26;
+  --border-strong: #2a2a3a;
 
-  --text: #f4f1e9;
-  --text-muted: #a6a39a;
-  --text-faint: #6f6d65;
+  --text: #f3f3f8;
+  --text-muted: #a1a1b8;
+  --text-faint: #5f5f74;
 
-  --accent: #ff6659;
-  --accent-hover: #ff5144;
+  /* Accent system — electric violet */
+  --accent: #8b6bff;
+  --accent-hover: #9c80ff;
+  --accent-soft: rgba(139, 107, 255, 0.13);
+  --accent-border: rgba(139, 107, 255, 0.38);
 
-  --success: #69bd91;
-  --warning: #e3b264;
-  --danger: #ff6b67;
+  /* Gradient partners */
+  --accent-2: #6366f1;
+  --accent-3: #22d3ee;
 
-  /* SubTrack tokens */
+  --accent-gradient: linear-gradient(
+    135deg,
+    #8b6bff 0%,
+    #6366f1 48%,
+    #22d3ee 100%
+  );
+
+  --accent-gradient-soft: linear-gradient(
+    135deg,
+    rgba(139, 107, 255, 0.22) 0%,
+    rgba(99, 102, 241, 0.16) 50%,
+    rgba(34, 211, 238, 0.18) 100%
+  );
+
+  /* Semantic */
+  --success: #34d399;
+  --success-soft: rgba(52, 211, 153, 0.12);
+  --success-border: rgba(52, 211, 153, 0.34);
+
+  --warning: #fbbf24;
+  --warning-soft: rgba(251, 191, 36, 0.11);
+  --warning-border: rgba(251, 191, 36, 0.32);
+
+  --danger: #fb7185;
+  --danger-soft: rgba(251, 113, 133, 0.11);
+  --danger-border: rgba(251, 113, 133, 0.3);
+
+  --ring: rgba(139, 107, 255, 0.55);
+
+  /* Aurora ambient light (lays over the shell via body) */
+  --aurora-1: rgba(139, 107, 255, 0.2);
+  --aurora-2: rgba(34, 211, 238, 0.12);
+  --aurora-3: rgba(99, 102, 241, 0.16);
+  --noise: rgba(255, 255, 255, 0.032);
+
+  /* Edge highlight — the 1px "lit" top edge premium surfaces get */
+  --edge: rgba(255, 255, 255, 0.07);
+
+  /* Noise texture as inline SVG turbulence */
+  --noise-svg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+
+  /* Logo mark — gradient on dark, high-contrast on light */
+  --logo-glyph: #ffffff;
+  --logo-box-bg: var(--accent-gradient);
+  --logo-box-border: transparent;
+  --logo-shadow: 0 8px 20px -8px
+    color-mix(in srgb, var(--accent) 55%, transparent);
+
+  /* SubTrack logical tokens */
   --st-bg: var(--background);
   --st-surface: var(--surface);
   --st-surface-raised: var(--surface-raised);
@@ -40,38 +100,113 @@
   --st-accent: var(--accent);
 
   --st-success: var(--success);
+  --st-success-soft: var(--success-soft);
   --st-warning: var(--warning);
+  --st-warning-soft: var(--warning-soft);
 
   --st-danger: var(--danger);
-  --st-danger-bg: rgba(255, 107, 103, 0.08);
-  --st-danger-border: rgba(255, 107, 103, 0.25);
+  --st-danger-bg: var(--danger-soft);
+  --st-danger-border: var(--danger-border);
 
   --st-radius: 12px;
+  --st-radius-lg: 16px;
+  --st-radius-pill: 999px;
+
+  /* Legacy / shorthand aliases used by some components */
+  --radius: var(--st-radius);
+  --radius-lg: var(--st-radius-lg);
+  --radius-pill: var(--st-radius-pill);
+
+  --action: var(--accent);
+  --action-hover: var(--accent-hover);
+  --action-text: var(--st-action-text);
+  --bg-elevated: var(--surface-raised);
+
+  /* Depth + glow system */
+  --st-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 var(--edge);
+  --st-shadow-md: 0 10px 32px -12px rgba(0, 0, 0, 0.55),
+    0 0 0 1px rgba(139, 107, 255, 0.04),
+    inset 0 1px 0 var(--edge);
+  --st-shadow-lg: 0 24px 64px -16px rgba(0, 0, 0, 0.65),
+    0 0 0 1px rgba(139, 107, 255, 0.06),
+    inset 0 1px 0 var(--edge);
+
+  --st-glow-sm: 0 8px 24px -10px rgba(139, 107, 255, 0.5),
+    0 0 0 1px rgba(139, 107, 255, 0.18);
+  --st-glow-md: 0 14px 44px -10px rgba(139, 107, 255, 0.6),
+    0 0 0 1px rgba(139, 107, 255, 0.28);
+  --st-ring-glow: 0 0 0 1px
+      color-mix(in srgb, var(--accent) 45%, transparent),
+    0 0 44px -10px color-mix(in srgb, var(--accent) 50%, transparent);
 }
 
 /* =========================================================
-   LIGHT THEME
+   AURORA / LIGHT
 ========================================================= */
 
 [data-theme="light"] {
-  --background: #f5f2ea;
-  --surface: #fffdf8;
+  --background: #f6f6fb;
+  --surface: #ffffff;
   --surface-raised: #ffffff;
-  --surface-hover: #eeeae1;
+  --surface-hover: #efeff6;
+  --surface-sunken: #f1f1f8;
 
-  --border: #ded9ce;
-  --border-strong: #c7c0b4;
+  --border: #e4e4ef;
+  --border-strong: #c6c6d8;
 
-  --text: #171714;
-  --text-muted: #66645d;
-  --text-faint: #969289;
+  --text: #16161f;
+  --text-muted: #5a5a6e;
+  --text-faint: #8b8b9e;
 
-  --accent: #d94e43;
-  --accent-hover: #c94137;
+  --accent: #6d4aff;
+  --accent-hover: #5f3ef2;
+  --accent-soft: rgba(109, 74, 255, 0.1);
+  --accent-border: rgba(109, 74, 255, 0.3);
 
-  --success: #31815a;
-  --warning: #a66c1c;
-  --danger: #c83d39;
+  --accent-2: #4f46e5;
+  --accent-3: #0891b2;
+
+  --accent-gradient: linear-gradient(
+    135deg,
+    #6d4aff 0%,
+    #6366f1 48%,
+    #0891b2 100%
+  );
+
+  --accent-gradient-soft: linear-gradient(
+    135deg,
+    rgba(109, 74, 255, 0.12) 0%,
+    rgba(79, 70, 229, 0.09) 50%,
+    rgba(8, 145, 178, 0.1) 100%
+  );
+
+  --success: #059669;
+  --success-soft: rgba(5, 150, 105, 0.09);
+  --success-border: rgba(5, 150, 105, 0.28);
+
+  --warning: #b45309;
+  --warning-soft: rgba(180, 83, 9, 0.09);
+  --warning-border: rgba(180, 83, 9, 0.26);
+
+  --danger: #e11d48;
+  --danger-soft: rgba(225, 29, 72, 0.08);
+  --danger-border: rgba(225, 29, 72, 0.24);
+
+  --ring: rgba(109, 74, 255, 0.4);
+
+  --aurora-1: rgba(109, 74, 255, 0.1);
+  --aurora-2: rgba(8, 145, 178, 0.07);
+  --aurora-3: rgba(79, 70, 229, 0.08);
+  --noise: rgba(15, 15, 30, 0.02);
+
+  --edge: rgba(255, 255, 255, 0.9);
+
+  --logo-glyph: var(--accent-2);
+  --logo-box-bg: #ffffff;
+  --logo-box-border: var(--accent-border);
+  --logo-shadow: 0 0 0 1px var(--accent-border),
+    0 8px 20px -10px color-mix(in srgb, var(--accent) 40%, transparent);
 
   --st-bg: var(--background);
   --st-surface: var(--surface);
@@ -92,13 +227,40 @@
   --st-accent: var(--accent);
 
   --st-success: var(--success);
+  --st-success-soft: var(--success-soft);
   --st-warning: var(--warning);
+  --st-warning-soft: var(--warning-soft);
 
   --st-danger: var(--danger);
-  --st-danger-bg: rgba(200, 61, 57, 0.07);
-  --st-danger-border: rgba(200, 61, 57, 0.22);
+  --st-danger-bg: var(--danger-soft);
+  --st-danger-border: var(--danger-border);
 
-  --st-radius: 12px;
+  /* Legacy / shorthand aliases used by some components */
+  --radius: var(--st-radius);
+  --radius-lg: var(--st-radius-lg);
+  --radius-pill: var(--st-radius-pill);
+
+  --action: var(--accent);
+  --action-hover: var(--accent-hover);
+  --action-text: var(--st-action-text);
+  --bg-elevated: var(--surface-raised);
+
+  --st-shadow-sm: 0 1px 2px rgba(18, 18, 35, 0.05),
+    inset 0 1px 0 var(--edge);
+  --st-shadow-md: 0 12px 40px -16px rgba(18, 18, 35, 0.12),
+    0 0 0 1px rgba(109, 74, 255, 0.03),
+    inset 0 1px 0 var(--edge);
+  --st-shadow-lg: 0 24px 64px -16px rgba(18, 18, 35, 0.18),
+    0 0 0 1px rgba(109, 74, 255, 0.05),
+    inset 0 1px 0 var(--edge);
+
+  --st-glow-sm: 0 8px 24px -12px rgba(109, 74, 255, 0.45),
+    0 0 0 1px rgba(109, 74, 255, 0.14);
+  --st-glow-md: 0 14px 44px -12px rgba(109, 74, 255, 0.55),
+    0 0 0 1px rgba(109, 74, 255, 0.24);
+  --st-ring-glow: 0 0 0 1px
+      color-mix(in srgb, var(--accent) 45%, transparent),
+    0 0 40px -12px color-mix(in srgb, var(--accent) 45%, transparent);
 }
 
 /* =========================================================
@@ -120,7 +282,6 @@ body {
   min-width: 320px;
   min-height: 100vh;
 
-  background: var(--background);
   color: var(--text);
 
   font-family:
@@ -142,6 +303,27 @@ body {
   transition:
     background-color 200ms ease,
     color 200ms ease;
+
+  /* Aurora ambient light */
+  background-color: var(--background);
+  background-image:
+    radial-gradient(1100px 720px at 82% -12%, var(--aurora-1), transparent 62%),
+    radial-gradient(1000px 680px at -12% 26%, var(--aurora-2), transparent 55%),
+    radial-gradient(900px 900px at 52% 118%, var(--aurora-3), transparent 62%);
+  background-attachment: fixed;
+}
+
+/* Film-grain overlay for a premium, non-flat surface */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 2147483646;
+  pointer-events: none;
+  background-image: var(--noise-svg);
+  background-size: 160px 160px;
+  opacity: 0.026;
+  mix-blend-mode: overlay;
 }
 
 button,
@@ -183,12 +365,13 @@ p {
 
 .display {
   font-family:
-    "Instrument Serif",
-    Georgia,
-    serif;
+    "Space Grotesk",
+    Inter,
+    system-ui,
+    sans-serif;
 
-  font-weight: 400;
-  letter-spacing: -0.035em;
+  font-weight: 600;
+  letter-spacing: -0.04em;
 
   text-wrap: balance;
 }
@@ -218,6 +401,18 @@ p {
     monospace;
 }
 
+.numeric {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Gradient text — used for hero / headline accents */
+.st-gradient-text {
+  background-image: var(--accent-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
 /* =========================================================
    COMMON SURFACES
 ========================================================= */
@@ -227,8 +422,7 @@ p {
   border: 1px solid var(--border);
   border-radius: var(--st-radius);
 
-  box-shadow:
-    0 1px 2px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--st-shadow-sm);
 
   transition:
     border-color 180ms ease,
@@ -239,6 +433,7 @@ p {
 
 .glass:hover {
   border-color: var(--border-strong);
+  box-shadow: var(--st-shadow-md);
 }
 
 .surface {
@@ -247,6 +442,14 @@ p {
 
 .surface-raised {
   background: var(--surface-raised);
+}
+
+/* Translucent glass bar — used for sticky nav / top bars */
+.st-glass-bar {
+  background: color-mix(in srgb, var(--background) 78%, transparent);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  backdrop-filter: blur(16px) saturate(140%);
+  border-bottom: 1px solid var(--border);
 }
 
 /* =========================================================
@@ -286,7 +489,7 @@ p {
 ========================================================= */
 
 ::selection {
-  background: rgba(255, 102, 89, 0.25);
+  background: rgba(139, 107, 255, 0.32);
   color: var(--text);
 }
 
@@ -295,8 +498,8 @@ p {
 ========================================================= */
 
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 9px;
+  height: 9px;
 }
 
 ::-webkit-scrollbar-track {
@@ -305,11 +508,14 @@ p {
 
 ::-webkit-scrollbar-thumb {
   background: var(--border-strong);
+  border: 2px solid transparent;
   border-radius: 999px;
+  background-clip: padding-box;
 }
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--text-faint);
+  background-clip: padding-box;
 }
 
 /* =========================================================
@@ -317,12 +523,12 @@ p {
 ========================================================= */
 
 :focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--ring);
   outline-offset: 3px;
 }
 
 /* =========================================================
-   SIMPLE PAGE ENTRANCE
+   ANIMATIONS
 ========================================================= */
 
 @keyframes st-fade-up {
@@ -339,6 +545,34 @@ p {
 
 .st-enter {
   animation: st-fade-up 450ms ease-out both;
+}
+
+/* Slow aurora drift for ambient glows */
+@keyframes st-aurora {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+
+  50% {
+    transform: translate3d(2%, -3%, 0) scale(1.06);
+  }
+}
+
+.st-aurora {
+  animation: st-aurora 16s ease-in-out infinite;
+}
+
+/* Soft pulse for live status dots */
+@keyframes st-pulse-dot {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--success) 45%, transparent);
+  }
+
+  50% {
+    box-shadow: 0 0 0 5px transparent;
+  }
 }
 
 /* =========================================================
@@ -358,6 +592,174 @@ p {
 }
 
 /* =========================================================
+   BADGE TONES
+========================================================= */
+
+.badge-neutral {
+  border-color: var(--border);
+  background: var(--surface-sunken);
+  color: var(--text-muted);
+  box-shadow: inset 0 1px 0 var(--edge);
+}
+
+.badge-success {
+  border-color: var(--success-border);
+  background: var(--success-soft);
+  color: var(--success);
+  box-shadow: 0 4px 16px -8px color-mix(in srgb, var(--success) 55%, transparent);
+}
+
+.badge-warning {
+  border-color: var(--warning-border);
+  background: var(--warning-soft);
+  color: var(--warning);
+  box-shadow: 0 4px 16px -8px color-mix(in srgb, var(--warning) 50%, transparent);
+}
+
+.badge-danger {
+  border-color: var(--danger-border);
+  background: var(--danger-soft);
+  color: var(--danger);
+  box-shadow: 0 4px 16px -8px color-mix(in srgb, var(--danger) 50%, transparent);
+}
+
+.badge-accent {
+  border-color: var(--accent-border);
+  background: var(--accent-soft);
+  color: var(--accent);
+  box-shadow: 0 4px 16px -8px color-mix(in srgb, var(--accent) 55%, transparent);
+}
+
+/* =========================================================
+   PRIMARY BUTTON — gradient fill + soft glow + shine sweep
+========================================================= */
+
+.st-btn-primary {
+  --btn-x: 0.5;
+
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+
+  background-image: var(--accent-gradient);
+  color: #fff;
+
+  box-shadow: var(--st-glow-sm);
+
+  transition:
+    box-shadow 220ms ease,
+    filter 220ms ease,
+    transform 150ms ease;
+}
+
+.st-btn-primary::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background-image: var(--accent-gradient);
+  filter: brightness(1.12);
+  opacity: 0;
+  transition: opacity 220ms ease;
+}
+
+.st-btn-primary:hover:not(:disabled) {
+  box-shadow: var(--st-glow-md);
+  filter: brightness(1.04);
+}
+
+.st-btn-primary:hover:not(:disabled)::before {
+  opacity: 1;
+}
+
+.st-btn-primary::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(
+    105deg,
+    transparent 32%,
+    rgba(255, 255, 255, 0.34) 50%,
+    transparent 68%
+  );
+  transform: translateX(-130%) skewX(-18deg);
+  transition: transform 700ms ease;
+}
+
+.st-btn-primary:hover:not(:disabled)::after {
+  transform: translateX(130%) skewX(-18deg);
+}
+
+/* Glassy secondary surfaces inside the app shell */
+.st-chip-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 1px solid transparent;
+  background:
+    linear-gradient(180deg, var(--surface-raised), var(--surface)) padding-box,
+    linear-gradient(135deg, var(--accent-border), var(--border-strong)) border-box;
+
+  box-shadow:
+    inset 0 1px 0 var(--edge),
+    0 6px 20px -10px rgba(0, 0, 0, 0.5);
+}
+
+/* =========================================================
+   BRAND MARK — adapts so the logo reads on both themes
+========================================================= */
+
+.st-logo-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  font-family: "Space Grotesk", Inter, sans-serif;
+  font-weight: 600;
+  line-height: 1;
+
+  background: var(--logo-box-bg);
+  color: var(--logo-glyph);
+  border: 1px solid var(--logo-box-border);
+  box-shadow: var(--logo-shadow);
+}
+
+.st-logo-glyph {
+  pointer-events: none;
+}
+
+/* =========================================================
+   TONAL ICON CHIP — one accent, flat, human-designed feel
+========================================================= */
+
+.st-accent-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 1px solid var(--accent-border);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+/* Live status dot */
+.st-status-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+/* Tabular figures for anything financial/metrical */
+.st-tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* =========================================================
    REDUCED MOTION
 ========================================================= */
 
@@ -368,6 +770,10 @@ p {
     scroll-behavior: auto !important;
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
+  }
+
+  .st-btn-primary::after {
+    display: none;
   }
 }
 
@@ -381,6 +787,6 @@ p {
   }
 
   .display {
-    letter-spacing: -0.025em;
+    letter-spacing: -0.03em;
   }
 }

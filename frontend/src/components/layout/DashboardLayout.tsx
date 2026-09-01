@@ -16,7 +16,6 @@ import {
   Tags,
   Menu,
   X,
-  Circle,
 } from "lucide-react"
 
 import { useAppStore } from "@/store/appStore"
@@ -48,6 +47,62 @@ const workspaceNav = [
   },
 ]
 
+function NavButton({
+  label,
+  icon: Icon,
+  active,
+  onNavigate,
+}: {
+  label: string
+  icon: typeof LayoutDashboard
+  active: boolean
+  onNavigate: () => void
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onNavigate}
+      className={cn(
+        "group relative flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm transition-all duration-180",
+        active
+          ? [
+              "bg-[var(--st-surface-hover)]",
+              "text-[var(--st-text)]",
+            ].join(" ")
+          : [
+              "text-[var(--st-text-muted)]",
+              "hover:bg-[var(--st-surface-hover)]",
+              "hover:text-[var(--st-text)]",
+            ].join(" ")
+      )}
+    >
+      {active && (
+        <span className="absolute left-0 top-1/2 h-5 w-[2px] -translate-y-1/2 rounded-full bg-[var(--accent-gradient)] shadow-[0_0_10px_color-mix(in_srgb,var(--accent)_60%,transparent)]" />
+      )}
+
+      <Icon
+        size={16}
+        strokeWidth={active ? 2 : 1.7}
+        className={cn(
+          "transition-colors",
+          active
+            ? "text-[var(--accent)]"
+            : "text-[var(--st-text-faint)] group-hover:text-[var(--st-text)]"
+        )}
+      />
+
+      <span>{label}</span>
+
+      {active && (
+        <ArrowUpRight
+          size={13}
+          className="ml-auto text-[var(--st-text-faint)]"
+        />
+      )}
+    </button>
+  )
+}
+
 export function DashboardLayout({
   children,
 }: {
@@ -71,65 +126,6 @@ export function DashboardLayout({
     navigate("/login")
   }
 
-  function NavButton({
-    path,
-    label,
-    icon: Icon,
-  }: {
-    path: string
-    label: string
-    icon: typeof LayoutDashboard
-  }) {
-    const active =
-      location.pathname === path
-
-    return (
-      <button
-        onClick={() => {
-          navigate(path)
-          setOpen(false)
-        }}
-        className={cn(
-          "group relative flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm transition-all duration-180",
-          active
-            ? [
-                "bg-[var(--st-surface-hover)]",
-                "text-[var(--st-text)]",
-              ].join(" ")
-            : [
-                "text-[var(--st-text-muted)]",
-                "hover:bg-[var(--st-surface-hover)]",
-                "hover:text-[var(--st-text)]",
-              ].join(" ")
-        )}
-      >
-        {active && (
-          <span className="absolute left-0 top-1/2 h-5 w-[2px] -translate-y-1/2 rounded-full bg-[var(--st-accent)]" />
-        )}
-
-        <Icon
-          size={16}
-          strokeWidth={active ? 2 : 1.7}
-          className={cn(
-            "transition-colors",
-            active
-              ? "text-[var(--st-accent)]"
-              : "text-[var(--st-text-faint)] group-hover:text-[var(--st-text)]"
-          )}
-        />
-
-        <span>{label}</span>
-
-        {active && (
-          <ArrowUpRight
-            size={13}
-            className="ml-auto text-[var(--st-text-faint)]"
-          />
-        )}
-      </button>
-    )
-  }
-
   const sidebar = (
     <>
       {/* Brand */}
@@ -138,14 +134,12 @@ export function DashboardLayout({
           onClick={() => navigate("/dashboard")}
           className="group flex items-center gap-3"
         >
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-[var(--st-border-strong)] bg-[var(--st-text)] text-[var(--st-bg)] transition-transform duration-200 group-hover:scale-105">
-            <span className="font-serif text-lg">
-              S
-            </span>
+          <div className="st-logo-mark st-logo-glyph h-9 w-9 rounded-lg text-base transition-transform duration-200 group-hover:scale-105">
+            S
           </div>
 
           <div className="text-left">
-            <p className="text-sm font-semibold tracking-[-0.02em]">
+            <p className="display text-[15px] tracking-[-0.02em]">
               SubTrack
             </p>
 
@@ -169,7 +163,13 @@ export function DashboardLayout({
             {workspaceNav.map((item) => (
               <NavButton
                 key={item.path}
-                {...item}
+                label={item.label}
+                icon={item.icon}
+                active={location.pathname === item.path}
+                onNavigate={() => {
+                  navigate(item.path)
+                  setOpen(false)
+                }}
               />
             ))}
           </div>
@@ -183,9 +183,13 @@ export function DashboardLayout({
             </p>
 
             <NavButton
-              path="/organization"
               label="Owner console"
               icon={Building2}
+              active={location.pathname === "/organization"}
+              onNavigate={() => {
+                navigate("/organization")
+                setOpen(false)
+              }}
             />
           </div>
         )}
@@ -194,13 +198,9 @@ export function DashboardLayout({
       {/* Account */}
       <div className="space-y-3 border-t border-[var(--st-border)] pt-5">
 
-        <div className="rounded-lg border border-[var(--st-border)] bg-[var(--st-surface)] p-3">
+        <div className="rounded-lg border border-[var(--st-border)] bg-[var(--st-surface)] p-3 shadow-[inset_0_1px_0_var(--edge)]">
           <div className="flex items-center gap-2">
-            <Circle
-              size={7}
-              fill="currentColor"
-              className="text-[var(--success)]"
-            />
+            <span className="st-status-dot text-[var(--success)]" />
 
             <p className="truncate text-xs font-medium">
               {email}
@@ -212,15 +212,17 @@ export function DashboardLayout({
           </p>
         </div>
 
-        <ThemeToggle />
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
 
-        <button
-          onClick={handleLogout}
-          className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-[var(--st-text-muted)] transition-colors hover:bg-[var(--st-surface-hover)] hover:text-[var(--danger)]"
-        >
-          <LogOut size={16} />
-          Log out
-        </button>
+          <button
+            onClick={handleLogout}
+            className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-[var(--st-border)] px-3 py-2 text-sm text-[var(--st-text-muted)] transition-colors hover:border-[var(--danger-border)] hover:bg-[var(--danger-bg)] hover:text-[var(--danger)]"
+          >
+            <LogOut size={15} />
+            Log out
+          </button>
+        </div>
       </div>
     </>
   )
@@ -229,7 +231,7 @@ export function DashboardLayout({
     <div className="flex min-h-screen bg-[var(--st-bg)]">
 
       {/* Desktop sidebar */}
-      <aside className="sticky top-0 hidden h-screen w-[258px] shrink-0 flex-col border-r border-[var(--st-border)] bg-[var(--st-surface)] p-5 lg:flex">
+      <aside className="sticky top-0 hidden h-screen w-[258px] shrink-0 flex-col border-r border-[var(--st-border)] bg-[color-mix(in_srgb,var(--surface)_92%,transparent)] p-5 backdrop-blur-xl lg:flex">
         {sidebar}
       </aside>
 
@@ -243,7 +245,7 @@ export function DashboardLayout({
             aria-label="Close menu"
           />
 
-          <aside className="relative z-10 flex h-full w-[280px] flex-col border-r border-[var(--st-border)] bg-[var(--st-surface)] p-5">
+          <aside className="relative z-10 flex h-full w-[280px] flex-col border-r border-[var(--st-border)] bg-[color-mix(in_srgb,var(--surface)_95%,transparent)] p-5 backdrop-blur-xl">
             <button
               className="mb-5 self-end rounded-lg p-2 text-[var(--st-text-muted)] hover:bg-[var(--st-surface-hover)] hover:text-[var(--st-text)]"
               onClick={() => setOpen(false)}
@@ -261,19 +263,23 @@ export function DashboardLayout({
       <div className="flex min-w-0 flex-1 flex-col">
 
         {/* Mobile header */}
-        <header className="sticky top-0 z-30 flex items-center gap-3 border-b border-[var(--st-border)] bg-[var(--st-bg)]/90 px-4 py-3 backdrop-blur-xl lg:hidden">
+        <header className="sticky top-0 z-30 flex items-center gap-3 border-b border-[var(--st-border)] bg-[color-mix(in_srgb,var(--background)_80%,transparent)] px-4 py-3 backdrop-blur-xl lg:hidden">
 
           <button
             onClick={() => setOpen(true)}
-            className="rounded-lg border border-[var(--st-border)] p-2 text-[var(--st-text-muted)] hover:bg-[var(--st-surface-hover)] hover:text-[var(--st-text)]"
+            className="rounded-xl border border-[var(--st-border)] p-2 text-[var(--st-text-muted)] hover:bg-[var(--st-surface-hover)] hover:text-[var(--st-text)]"
             aria-label="Open menu"
           >
             <Menu size={17} />
           </button>
 
-          <span className="font-semibold tracking-[-0.02em]">
+          <span className="display text-[15px] tracking-[-0.02em]">
             SubTrack
           </span>
+
+          <div className="ml-auto">
+            <ThemeToggle size="sm" />
+          </div>
         </header>
 
         <main className="min-h-screen flex-1 p-6 md:p-10 lg:p-12">

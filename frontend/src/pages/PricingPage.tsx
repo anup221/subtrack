@@ -11,6 +11,7 @@ import {
 } from "lucide-react"
 
 import {
+  cancelPlanChange,
   changePlan,
   getCurrentSubscription,
   getPlans,
@@ -54,6 +55,15 @@ export default function PricingPage() {
     },
   })
 
+  const cancelMutation = useMutation({
+    mutationFn: cancelPlanChange,
+    onSuccess: async () => {
+      await queryClient.refetchQueries({
+        queryKey: ["subscription"],
+      })
+    },
+  })
+
   if (plansLoading) {
     return (
       <div className="mx-auto max-w-6xl">
@@ -85,6 +95,45 @@ export default function PricingPage() {
         title="Choose what fits your product."
         description="Simple plans for teams starting small, scaling quickly, or operating at enterprise volume."
       />
+
+      {/* PENDING UPGRADE */}
+
+      {subscription?.pendingPlan &&
+        !mutation.data?.upgradeInvoice && (
+          <div className="mt-8 rounded-xl border border-[var(--st-danger-border)] bg-[var(--st-danger-bg)] px-5 py-4">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm font-medium text-[var(--st-text)]">
+                  Upgrade to {subscription.pendingPlan.name} is
+                  awaiting payment
+                </p>
+                <p className="mt-1 text-sm text-[var(--st-text-muted)]">
+                  Complete the Razorpay checkout to activate it, or
+                  cancel the pending change to pick a different plan.
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={cancelMutation.isPending}
+                  onClick={() => cancelMutation.mutate()}
+                >
+                  {cancelMutation.isPending
+                    ? "Cancelling..."
+                    : "Cancel change"}
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={() => navigate("/billing")}
+                >
+                  Pay now
+                  <ArrowRight size={14} />
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
 
       {/* UPGRADE MESSAGE */}
 
@@ -145,6 +194,12 @@ export default function PricingPage() {
             <p className="mt-2 text-sm font-medium text-[var(--st-text)]">
               {subscription.plan.name}
             </p>
+
+            {subscription.scheduledPlan && (
+              <p className="mt-1 text-xs text-[var(--st-success)]">
+                → {subscription.scheduledPlan.name} next cycle
+              </p>
+            )}
           </div>
         )}
 
@@ -159,6 +214,10 @@ export default function PricingPage() {
           const isCurrent =
             subscription?.plan.id === plan.id
 
+          const isScheduled =
+            subscription?.scheduledPlan?.id === plan.id &&
+            !isCurrent
+
           const isPopular =
             plan.name.toLowerCase() === "pro"
 
@@ -172,22 +231,38 @@ export default function PricingPage() {
                 "transition-all duration-200",
                 "hover:-translate-y-0.5 hover:border-[var(--st-border-strong)]",
                 isCurrent &&
-                  "border-[var(--st-action)]/50",
+                  "border-[color-mix(in_srgb,var(--accent)_45%,transparent)] shadow-[inset_0_1px_0_var(--edge),var(--st-ring-glow)]",
+                isScheduled &&
+                  "border-dashed border-[var(--st-border-strong)] opacity-90",
                 isPopular &&
                   !isCurrent &&
-                  "border-[var(--st-border-strong)]"
+                  !isScheduled &&
+                  "border-[var(--st-border-strong)] shadow-[inset_0_1px_0_var(--edge),var(--st-shadow-md)]"
               )}
             >
+
+              {/* AMBIENT GLOW */}
+              <div
+                className={cn(
+                  "pointer-events-none absolute -right-20 -top-24 h-56 w-56 rounded-full blur-3xl transition-opacity",
+                  isCurrent
+                    ? "bg-[var(--accent-gradient-soft)] opacity-100"
+                    : isPopular
+                      ? "bg-[var(--accent-gradient-soft)] opacity-0 group-hover:opacity-100"
+                      : "bg-[var(--accent-gradient-soft)] opacity-0 group-hover:opacity-70"
+                )}
+                aria-hidden
+              />
 
               {/* TOP ACCENT */}
 
               <div
                 className={cn(
-                  "absolute inset-x-0 top-0 h-0.5",
+                  "absolute inset-x-0 top-0 h-[3px]",
                   isCurrent
-                    ? "bg-[var(--st-action)]"
+                    ? "bg-[var(--accent-gradient)]"
                     : isPopular
-                      ? "bg-[var(--st-text)]"
+                      ? "bg-[var(--accent-gradient)] opacity-70"
                       : "bg-transparent"
                 )}
               />
@@ -204,14 +279,18 @@ export default function PricingPage() {
                       className={cn(
                         "eyebrow",
                         isCurrent &&
-                          "text-[var(--st-action)]"
+                          "text-[var(--st-action)]",
+                        isScheduled &&
+                          "text-[var(--st-success)]"
                       )}
                     >
-                      {isPopular
-                        ? "Recommended"
-                        : isCurrent
-                          ? "Your plan"
-                          : "Plan"}
+                      {isScheduled
+                        ? "Scheduled"
+                        : isPopular
+                          ? "Recommended"
+                          : isCurrent
+                            ? "Your plan"
+                            : "Plan"}
                     </p>
 
                     <h2 className="mt-3 text-2xl font-semibold tracking-[-0.025em] text-[var(--st-text)]">
@@ -226,7 +305,13 @@ export default function PricingPage() {
                     </span>
                   )}
 
-                  {!isCurrent && isPopular && (
+                  {isScheduled && (
+                    <span className="rounded-full border border-[var(--st-success)]/30 bg-[var(--st-success)]/10 px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.12em] text-[var(--st-success)]">
+                      Next cycle
+                    </span>
+                  )}
+
+                  {!isCurrent && !isScheduled && isPopular && (
                     <div className="flex h-8 w-8 items-center justify-center rounded-full border border-[var(--st-border)] bg-[var(--st-surface-raised)]">
                       <Sparkles
                         size={14}
@@ -298,12 +383,15 @@ export default function PricingPage() {
                     variant={
                       isCurrent
                         ? "secondary"
-                        : isPopular
-                          ? "default"
-                          : "outline"
+                        : isScheduled
+                          ? "outline"
+                          : isPopular
+                            ? "default"
+                            : "outline"
                     }
                     disabled={
                       isCurrent ||
+                      isScheduled ||
                       mutation.isPending
                     }
                     onClick={() =>
@@ -312,11 +400,14 @@ export default function PricingPage() {
                   >
                     {isCurrent
                       ? "Current plan"
-                      : mutation.isPending
-                        ? "Switching..."
-                        : "Choose plan"}
+                      : isScheduled
+                        ? "Scheduled"
+                        : mutation.isPending
+                          ? "Switching..."
+                          : "Choose plan"}
 
                     {!isCurrent &&
+                      !isScheduled &&
                       !mutation.isPending && (
                         <ArrowRight size={15} />
                       )}

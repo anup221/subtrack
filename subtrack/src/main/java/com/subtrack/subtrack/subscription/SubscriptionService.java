@@ -1,10 +1,13 @@
 package com.subtrack.subtrack.subscription;
 
 import com.subtrack.subtrack.billing.BillingService;
+import com.subtrack.subtrack.billing.InvoiceRepository;
+import com.subtrack.subtrack.billing.InvoiceStatus;
 import com.subtrack.subtrack.billing.dto.InvoiceResponse;
 import com.subtrack.subtrack.plan.Plan;
 import com.subtrack.subtrack.plan.PlanRepository;
 import com.subtrack.subtrack.plan.PlanService;
+import com.subtrack.subtrack.plan.dto.PlanResponse;
 import com.subtrack.subtrack.subscription.dto.AutopayToggleResponse;
 import com.subtrack.subtrack.subscription.dto.ChangePlanRequest;
 import com.subtrack.subtrack.subscription.dto.ChangePlanResponse;
@@ -29,13 +32,20 @@ public class SubscriptionService {
     private final PlanRepository planRepository;
     private final PlanService planService;
     private final BillingService billingService;
+    private final InvoiceRepository invoiceRepository;
 
-    public void createTrialSubscription(UUID organizationId) {
+    /**
+     * Every new organization starts on the Free plan with an ACTIVE
+     * subscription. No trial is used — the Free plan is $0 and never
+     * generates an invoice, so the org can upgrade to a paid plan at
+     * any time by paying the full amount up front.
+     */
+    public void createFreeSubscription(UUID organizationId) {
         Subscription sub = new Subscription();
 
         sub.setOrganizationId(organizationId);
         sub.setPlanId(FREE_PLAN_ID);
-        sub.setStatus(SubscriptionStatus.TRIAL);
+        sub.setStatus(SubscriptionStatus.ACTIVE);
         sub.setCurrentPeriodStart(Instant.now());
         sub.setCurrentPeriodEnd(
                 Instant.now().plus(30, ChronoUnit.DAYS)
@@ -98,31 +108,57 @@ public class SubscriptionService {
         if (sub.getStatus() == SubscriptionStatus.CANCELED) {
             throw new IllegalStateException("A canceled subscription cannot change plans");
         }
+
+        // An unpaid upgrade waiting for Razorpay checkout must be completed
+        // (or abandoned) before another paid plan can be selected. A scheduled
+        // downgrade (no invoice) can always be replaced by a new selection.
         if (sub.getPendingPlanInvoiceId() != null) {
             throw new IllegalStateException("A plan-change payment is already pending. Complete it before selecting another plan.");
         }
 
+        boolean isUpgrade =
+                newPlan.getPriceCents() > oldPlan.getPriceCents();
+
+        if (!isUpgrade) {
+            // Downgrade / equal cost / free: never charge now, never apply now.
+            // Schedule it to take effect at the next billing cycle.
+            sub.setPendingPlanId(newPlan.getId());
+            sub.setPendingPlanInvoiceId(null);
+            sub.setUpdatedAt(Instant.now());
+            subscriptionRepository.save(sub);
+
+            return new ChangePlanResponse(
+                    toResponse(sub),
+                    null,
+                    true
+            );
+        }
+
+        // Paid upgrade. Free -> paid charges the full price; paid -> paid
+        // charges only the prorated difference for the remaining period.
         int amountDueCents =
-                calculateAmountDueCents(
+                calculateUpgradeAmountDueCents(
                         sub,
                         oldPlan,
                         newPlan
                 );
 
-        // A downgrade (and a switch to Free) has no charge and is safe to apply
-        // immediately.  A paid upgrade is deliberately only staged here.
         InvoiceResponse upgradeInvoice = null;
-        if (amountDueCents == 0) {
-            sub.setPlanId(newPlan.getId());
-            sub.setPendingPlanId(null);
-            sub.setPendingPlanInvoiceId(null);
-        } else {
+
+        if (amountDueCents > 0) {
             upgradeInvoice = billingService.generateUpgradeInvoice(
                     organizationId, sub.getId(), oldPlan, newPlan,
                     amountDueCents, sub.getCurrentPeriodEnd());
             sub.setPendingPlanId(newPlan.getId());
             sub.setPendingPlanInvoiceId(upgradeInvoice.id());
+        } else {
+            // Prorated difference is zero (e.g. upgrading right at the end of
+            // a period). Apply immediately without creating a $0 invoice.
+            sub.setPlanId(newPlan.getId());
+            sub.setPendingPlanId(null);
+            sub.setPendingPlanInvoiceId(null);
         }
+
         sub.setUpdatedAt(Instant.now());
         subscriptionRepository.save(sub);
 
@@ -133,17 +169,45 @@ public class SubscriptionService {
     }
 
     /**
-     * Free plan → any paid plan:
-     * full price, no proration.
+     * Applies a scheduled downgrade (or a switch to Free) at the next
+     * billing cycle. Called by the billing job before generating the
+     * next month's invoice. Scheduled plan changes are never charged.
      *
-     * Paid plan → cheaper or equal plan:
-     * $0 due now.
-     *
-     * Paid plan → more expensive plan:
-     * prorated difference for the days remaining
-     * in the current billing period.
+     * Returns true if a scheduled plan was applied.
      */
-    private int calculateAmountDueCents(
+    @Transactional
+    public boolean applyScheduledPlanChange(UUID organizationId) {
+        Subscription sub = subscriptionRepository
+                .findByOrganizationId(organizationId)
+                .orElse(null);
+
+        if (sub == null
+                || sub.getPendingPlanId() == null
+                || sub.getPendingPlanInvoiceId() != null) {
+            return false;
+        }
+
+        sub.setPlanId(sub.getPendingPlanId());
+        sub.setPendingPlanId(null);
+        sub.setPendingPlanInvoiceId(null);
+        sub.setUpdatedAt(Instant.now());
+        subscriptionRepository.save(sub);
+
+        return true;
+    }
+
+    /**
+     * Returns how much a paid upgrade costs now.
+     *
+     * Free plan → any paid plan: full price, no proration.
+     *
+     * Paid plan → more expensive plan: prorated difference for the
+     * days remaining in the current billing period.
+     *
+     * Downgrades and Free/equal switches are handled by the caller as
+     * scheduled changes and never reach this method with a charge.
+     */
+    private int calculateUpgradeAmountDueCents(
             Subscription sub,
             Plan oldPlan,
             Plan newPlan
@@ -151,12 +215,6 @@ public class SubscriptionService {
 
         if (oldPlan.getPriceCents() == 0) {
             return newPlan.getPriceCents();
-        }
-
-        if (newPlan.getPriceCents()
-                <= oldPlan.getPriceCents()) {
-
-            return 0;
         }
 
         long daysInPeriod =
@@ -219,6 +277,44 @@ public class SubscriptionService {
         sub.setStatus(SubscriptionStatus.CANCELED);
         sub.setUpdatedAt(Instant.now());
 
+        subscriptionRepository.save(sub);
+
+        return toResponse(sub);
+    }
+
+    /**
+     * Cancels an in-progress plan change.
+     *
+     * If an upgrade invoice was generated but the Razorpay checkout was
+     * abandoned, the invoice is voided and the pending plan is cleared so
+     * the organization can pick a plan again instead of being stuck.
+     * Scheduled downgrades (no invoice) are simply cleared.
+     */
+    @Transactional
+    public SubscriptionResponse cancelPendingPlanChange() {
+        UUID organizationId = TenantContext.get();
+
+        Subscription sub = subscriptionRepository
+                .findByOrganizationId(organizationId)
+                .orElseThrow(
+                        () -> new IllegalStateException(
+                                "No subscription found for this organization"
+                        )
+                );
+
+        if (sub.getPendingPlanInvoiceId() != null) {
+            invoiceRepository.findById(sub.getPendingPlanInvoiceId())
+                    .ifPresent(invoice -> {
+                        if (invoice.getStatus() != InvoiceStatus.PAID) {
+                            invoice.setStatus(InvoiceStatus.FAILED);
+                            invoiceRepository.save(invoice);
+                        }
+                    });
+        }
+
+        sub.setPendingPlanId(null);
+        sub.setPendingPlanInvoiceId(null);
+        sub.setUpdatedAt(Instant.now());
         subscriptionRepository.save(sub);
 
         return toResponse(sub);
@@ -297,6 +393,23 @@ public class SubscriptionService {
                                 )
                         );
 
+        // A pending plan that has no invoice is a downgrade / switch to Free
+        // scheduled to take effect at the next billing cycle. A pending plan
+        // WITH an invoice is an unpaid upgrade still waiting for payment.
+        PlanResponse scheduledPlan = null;
+        PlanResponse pendingPlan = null;
+        if (sub.getPendingPlanId() != null) {
+            PlanResponse pp = planRepository
+                    .findById(sub.getPendingPlanId())
+                    .map(planService::toResponse)
+                    .orElse(null);
+            if (sub.getPendingPlanInvoiceId() == null) {
+                scheduledPlan = pp;
+            } else {
+                pendingPlan = pp;
+            }
+        }
+
         return new SubscriptionResponse(
                 sub.getId(),
                 sub.getOrganizationId(),
@@ -305,7 +418,9 @@ public class SubscriptionService {
                 sub.getCurrentPeriodStart(),
                 sub.getCurrentPeriodEnd(),
                 sub.getNextBillingDate(),
-                sub.isAutopayEnabled()
+                sub.isAutopayEnabled(),
+                scheduledPlan,
+                pendingPlan
         );
     }
 }

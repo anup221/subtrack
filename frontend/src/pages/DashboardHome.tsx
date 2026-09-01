@@ -19,6 +19,7 @@ import { useAppStore } from "@/store/appStore"
 
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { PageHeader } from "@/components/ui/page-header"
 
 import {
@@ -31,9 +32,14 @@ export default function DashboardHome() {
   const email = useAppStore((s) => s.email)
   const role = useAppStore((s) => s.role)
 
-  const { data: subscription, isLoading } = useQuery({
+  const {
+    data: subscription,
+    isLoading,
+    isError: subscriptionError,
+  } = useQuery({
     queryKey: ["subscription"],
     queryFn: getCurrentSubscription,
+    retry: false,
   })
 
   const { data: summary } = useQuery({
@@ -47,6 +53,36 @@ export default function DashboardHome() {
         <div className="h-4 w-24 animate-pulse rounded bg-[var(--st-surface-hover)]" />
         <div className="h-12 w-80 animate-pulse rounded bg-[var(--st-surface-hover)]" />
         <div className="h-5 w-96 max-w-full animate-pulse rounded bg-[var(--st-surface-hover)]" />
+      </div>
+    )
+  }
+
+  if (subscriptionError || !subscription) {
+    return (
+      <div className="mx-auto max-w-6xl pb-12">
+        <Card className="overflow-hidden p-0">
+          <div className="flex flex-col items-start gap-3 p-8 sm:flex-row sm:items-center">
+            <div className="st-chip-icon flex h-11 w-11 shrink-0 items-center justify-center rounded-xl">
+              <Shield size={19} className="text-[var(--accent)]" />
+            </div>
+            <div>
+              <p className="text-base font-medium text-[var(--st-text)]">
+                No active subscription found
+              </p>
+              <p className="mt-1 text-sm leading-6 text-[var(--st-text-muted)]">
+                Your workspace doesn't have a subscription yet. Choose a
+                plan to get started.
+              </p>
+            </div>
+            <Button
+              className="sm:ml-auto"
+              onClick={() => navigate("/pricing")}
+            >
+              Choose a plan
+              <ArrowRight size={15} />
+            </Button>
+          </div>
+        </Card>
       </div>
     )
   }
@@ -105,16 +141,20 @@ export default function DashboardHome() {
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
       >
-        <Card className="overflow-hidden p-0">
+        <Card className="relative overflow-hidden p-0 shadow-[inset_0_1px_0_var(--edge),var(--st-shadow-md)]">
+          <div
+            className="pointer-events-none absolute inset-y-0 -right-24 w-[360px] bg-[var(--accent-gradient-soft)] blur-2xl"
+            aria-hidden
+          />
 
-          <div className="flex flex-col gap-6 p-6 sm:p-7 lg:flex-row lg:items-center lg:justify-between">
+          <div className="relative flex flex-col gap-6 p-6 sm:p-7 lg:flex-row lg:items-center lg:justify-between">
 
             <div className="flex items-start gap-4">
 
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-[var(--st-border)] bg-[var(--st-surface-raised)]">
+              <div className="st-chip-icon flex h-12 w-12 shrink-0 items-center justify-center rounded-xl">
                 <Shield
-                  size={19}
-                  className="text-[var(--st-action)]"
+                  size={20}
+                  className="text-[var(--accent)]"
                 />
               </div>
 
@@ -141,6 +181,13 @@ export default function DashboardHome() {
                   </Badge>
 
                 </div>
+
+                {subscription?.scheduledPlan && (
+                  <p className="mt-2 text-sm text-[var(--st-success)]">
+                    → {subscription.scheduledPlan.name}{" "}
+                    scheduled for next billing cycle
+                  </p>
+                )}
 
                 <p className="mt-2 text-sm text-[var(--st-text-muted)]">
                   $
@@ -169,16 +216,16 @@ export default function DashboardHome() {
                   Usage
                 </span>
 
-                <span className="text-xs font-medium">
+                <span className="numeric text-xs font-medium">
                   {percentUsed}%
                 </span>
 
               </div>
 
-              <div className="h-1.5 overflow-hidden rounded-full bg-[var(--st-surface-hover)]">
+              <div className="h-2 overflow-hidden rounded-full border border-[var(--st-border)] bg-[var(--st-surface-hover)] shadow-[inset_0_1px_3px_rgba(0,0,0,0.2)]">
 
                 <div
-                  className="h-full rounded-full bg-[var(--st-action)] transition-all duration-500"
+                  className="h-full rounded-full bg-[var(--accent-gradient)] shadow-[0_0_12px_color-mix(in_srgb,var(--accent)_60%,transparent)] transition-all duration-500"
                   style={{
                     width: `${percentUsed}%`,
                   }}
@@ -187,9 +234,10 @@ export default function DashboardHome() {
               </div>
 
               <p className="mt-2 text-xs text-[var(--st-text-faint)]">
-                {summary?.currentPeriodUsage.toLocaleString()}{" "}
+                <span className="numeric">{summary?.currentPeriodUsage.toLocaleString()}</span>{" "}
                 of{" "}
-                {summary?.maxUsage.toLocaleString()} calls
+                <span className="numeric">{summary?.maxUsage.toLocaleString()}</span>{" "}
+                calls
               </p>
 
             </div>
@@ -244,20 +292,20 @@ export default function DashboardHome() {
 
                 <div className="flex items-start justify-between">
 
-                  <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-[var(--st-border)] bg-[var(--st-surface-raised)]">
+                  <div className="st-chip-icon flex h-10 w-10 items-center justify-center rounded-xl">
 
                     <link.icon
                       size={17}
-                      className="text-[var(--st-action)]"
+                      className="text-[var(--accent)]"
                     />
 
                   </div>
 
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full border border-[var(--st-border)] transition-colors group-hover:border-[var(--st-border-strong)]">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full border border-[var(--st-border)] bg-[var(--surface-sunken)] text-[var(--st-text-faint)] transition-colors group-hover:border-[color-mix(in_srgb,var(--accent)_40%,transparent)] group-hover:text-[var(--accent)]">
 
                     <ArrowRight
                       size={14}
-                      className="text-[var(--st-text-faint)] transition-transform group-hover:translate-x-0.5"
+                      className="transition-transform group-hover:translate-x-0.5"
                     />
 
                   </div>
@@ -306,10 +354,10 @@ export default function DashboardHome() {
 
               <div className="flex items-start justify-between">
 
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-[var(--st-border)]">
+                <div className="st-chip-icon flex h-10 w-10 items-center justify-center rounded-xl">
                   <Building2
                     size={17}
-                    className="text-[var(--st-action)]"
+                    className="text-[var(--accent)]"
                   />
                 </div>
 
@@ -327,40 +375,6 @@ export default function DashboardHome() {
               <p className="mt-2 text-sm leading-6 text-[var(--st-text-muted)]">
                 Manage your tenant identity, plan,
                 usage, and invoices.
-              </p>
-
-            </Card>
-
-            <Card
-              onClick={() =>
-                navigate("/admin")
-              }
-              className="group cursor-pointer"
-            >
-
-              <div className="flex items-start justify-between">
-
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-[var(--st-border)]">
-                  <Shield
-                    size={17}
-                    className="text-[var(--st-action)]"
-                  />
-                </div>
-
-                <ArrowRight
-                  size={15}
-                  className="text-[var(--st-text-faint)] transition-transform group-hover:translate-x-1"
-                />
-
-              </div>
-
-              <h3 className="mt-8 font-semibold">
-                Platform admin console
-              </h3>
-
-              <p className="mt-2 text-sm leading-6 text-[var(--st-text-muted)]">
-                View platform-wide MRR, churn,
-                subscriptions, and tenants.
               </p>
 
             </Card>
