@@ -436,14 +436,14 @@ Platform Scope
               │                     │                     │
               ▼                     ▼                     ▼
       ┌───────────────┐     ┌───────────────┐     ┌───────────────┐
-      │  PostgreSQL   │     │     Redis     │     │   Razorpay    │
-      │               │     │               │     │               │
-      │ Organizations │     │ Infrastructure│     │ Orders        │
-      │ Users         │     │ Support       │     │ Payments      │
-      │ Plans         │     │               │     │ Verification  │
-      │ Subscriptions │     │               │     │ Webhooks      │
-      │ Invoices      │     │               │     │               │
-      │ Payments      │     │               │     │               │
+       │  PostgreSQL   │        │     Redis     |        │   Razorpay    |
+       │               │        │               │        │               │
+       │ Organizations │        │ Infrastructure│        │ Orders        │
+       │ Users         │        │ Support       │        │ Payments      │
+       │ Plans         │        │               │        │ Verification  │
+       │ Subscriptions │        │               │        │ Webhooks      │
+       │ Invoices      │        │               │        │               │
+       │ Payments      │        │               │        │               │
       └───────────────┘     └───────────────┘     └───────────────┘
 ```
 
