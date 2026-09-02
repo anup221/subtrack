@@ -769,33 +769,7 @@ The database uniqueness constraint remains the final protection against concurre
 
 # 📸 Screenshots
 
-## Landing Page
-
-![SubTrack Landing Page](assets/screenshots/landing-page.png)
-
-## Login
-
-![SubTrack Login](assets/screenshots/login.png)
-
-## Dashboard
-
-![SubTrack Dashboard](assets/screenshots/dashboard.png)
-
-## Plans
-
-![SubTrack Plans](assets/screenshots/plans.png)
-
-## Usage & Metering
-
-![SubTrack Usage](assets/screenshots/usage-meter.png)
-
-## Billing & Invoices
-
-![SubTrack Billing](assets/screenshots/invoice.png)
-
-## Razorpay Payment
-
-![Razorpay Payment](assets/screenshots/razorpay.png)
+Screenshots of the landing page, login, dashboard, plans, usage metering, billing/invoices, and Razorpay checkout are available in the repository's assets.
 
 ---
 
