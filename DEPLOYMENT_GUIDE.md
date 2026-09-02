@@ -1,226 +1,224 @@
 # SubTrack — Deployment Guide (Frontend on Vercel, Backend on Railway)
 
-End-to-end, step-by-step instructions. **No code changes are required.**
-The only new file this guide asks you to create is `frontend/vercel.json` (a config file, described in Step 12).
+A complete, step-by-step walkthrough. The repository is already pushed to GitHub
+(`anup221/subtrack`) and is deployment-ready — **no code changes are required**.
+The only new file the frontend step asks for is `frontend/vercel.json`, which is
+already committed in the repo, so you won't even need to create it.
+
+> Last reviewed: everything below matches the codebase as pushed.
 
 ---
 
-## 0. What you are deploying
+## What you're deploying
 
-A React/Vite frontend (in `frontend/`) and a Spring Boot backend (in `subtrack/`) that needs:
+A React/Vite/TypeScript frontend (`frontend/`) and a Spring Boot backend (`subtrack/`).
 
 | Service | Where it lives | Provider (this guide) |
 | --- | --- | --- |
-| Backend (Spring Boot, Java 17+) | repo `subtrack/` | Railway |
+| Backend (Spring Boot, **Java 25**) | repo `subtrack/` | Railway |
 | Frontend (React + Vite + TS) | repo `frontend/` | Vercel |
 | PostgreSQL 16 | database | Railway Postgres plugin |
 | Redis | usage counters | Railway Redis plugin |
-| Google OAuth | optional (see Step 10) | Google Cloud |
+| Google OAuth | optional (Step 9) | Google Cloud |
 | Razorpay | payments (test mode) | Razorpay |
 
-The backend already ships a **production profile** (`subtrack/src/main/resources/application-prod.yml`)
-that reads everything from environment variables, and Flyway applies database migrations
-automatically on first boot. There is nothing to edit in the code.
+The backend ships a **prod profile** (`subtrack/src/main/resources/application-prod.yml`)
+that reads everything from environment variables, and Flyway applies DB migrations
+automatically on first boot. Nothing to edit in the code.
 
 ---
 
-## 1. Prerequisites — accounts and accounts
+## Step 1 — Accounts you need
 
-Create (free, except optionally Razorpay):
+Create these (all free, except optionally Razorpay):
 
-1. **GitHub** account — your code lives here and both Railway + Vercel deploy from it.
-2. **Railway** account — https://railway.app. New accounts get a one-time trial credit (enough
-   to run the backend + Postgres + Redis for a demo; no card required to start).
-3. **Vercel** account — https://vercel.com. Free tier is fine.
-4. **Google Cloud** account — only needed if you want the "Continue with Google" button to work.
-5. **Razorpay** account — only needed if you want to demo real checkout; test-mode keys are free.
+1. **GitHub** — already done; your repo `anup221/subtrack` is pushed and ready.
+2. **Railway** — https://railway.app. New accounts get one-time trial credit (enough to run
+   backend + Postgres + Redis for a demo; no card required to start).
+3. **Vercel** — https://vercel.com. Free tier is fine.
+4. **Google Cloud** — https://console.cloud.google.com (only if you want the "Continue with
+   Google" buttons to work).
+5. **Razorpay** — https://dashboard.razorpay.com (only if you want real-checkout demo; test keys are free).
 
----
-
-## 2. Prepare the repository
-
-1. Open PowerShell in `D:\subtrack`.
-2. If it is not already a git repo:
-   ```powershell
-   git init
-   git add .
-   git commit -m "SubTrack - multi-tenant SaaS billing platform"
-   ```
-3. Create a **private or public** repo on GitHub, then:
-   ```powershell
-   git remote add origin https://github.com/<your-username>/subtrack.git
-   git branch -M main
-   git push -u origin main
-   ```
-4. **Security check — do NOT skip:**
-   - Confirm `subtrack/src/main/resources/application-local.yml` is **gitignored**
-     (it holds your real Google/Razorpay secrets). It was already added to `.gitignore`.
-   - Never commit `frontend/.env` — it is a Vercel dashboard setting, not a file you push.
+> You can complete Step 4 and Step 8 first and defer Google (Step 9) and Razorpay (Step 10) —
+> but the backend will only boot once all required env vars below are set. For a first boot you
+> may give Google/Razorpay placeholder values, then fill in real ones later (see Step 11 notes).
 
 ---
 
-## 3. Rent the two horses on Railway
+## Step 2 — Deploy PostgreSQL and Redis on Railway
 
-1. Open https://railway.app → **New Project**.
-2. Choose **PostgreSQL** → creates a Postgres service.
-3. Choose **Redis** → creates a Redis service.
+1. Open https://railway.app → sign in → **New Project**.
+2. Choose **PostgreSQL** → wait for it to provision. This is the app's primary database.
+3. Choose **Redis** → provision it. This backs the usage counters.
 
-> Railway trial credit: you get a one-time allotment on a new account. For a resume demo the
-> cost is near zero while it lasts. When the credit runs out, the simplest move is to keep the
-> Postgres + backend, or clone everything onto a cheap hobby VPS — not required today.
+You'll copy connection details from each service in Step 6.
 
 ---
 
-## 4. Deploy the backend to Railway
+## Step 3 — Deploy the backend to Railway
 
 1. In your Railway project: **New → GitHub → your `subtrack` repo → Add Service**.
-2. In the service settings set **Root Directory** to `subtrack`
-   (Railway then builds with `pom.xml` — it auto-detects Maven).
-3. Under **Settings → Deploy**, wait for one build so the logs show `BUILD SUCCESS`.
-   If the default start command is wrong, set a **Custom Start Command**:
+2. In the service **Settings**, set **Root Directory** to `subtrack`
+   (Railway then builds from `pom.xml` — it auto-detects Maven).
+3. **Deploy** and watch **Deploy Logs** for `BUILD SUCCESS`.
+4. If the default start command is wrong, set a **Custom Start Command**:
    ```
    java -jar target/*.jar
    ```
-4. Under **Settings → Networking**, note your domain: `https://subtrack-prod.up.railway.app`.
-5. **Service → Variables** → add all of the following (replace the placeholders):
+5. Under **Settings → Networking**, note your domain, e.g. `https://subtrack-prod.up.railway.app`.
+
+> **Java 25 requirement:** Railway's default build image must support Java 25 for the Maven
+> compile to succeed. If the build fails with an "unsupported class file / invalid source
+> release 25" error, choose a Java 25-capable build image (Settings → Build → Image, e.g. a
+> `maven:3.9-eclipse-temurin-25` style image) or upgrade the default.
+
+---
+
+## Step 4 — Generate your secrets
+
+Open PowerShell **anywhere** (not inside the repo) and generate two secrets:
+
+```powershell
+openssl rand -hex 32   # -> JWT_SECRET
+openssl rand -hex 32   # -> WEBHOOK_SECRET
+```
+
+Also decide on a secret **`ADMIN_BOOTSTRAP_CODE`** (a password you'll type to create the first
+platform admin later). Keep all three somewhere safe.
+
+---
+
+## Step 5 — Set the backend environment variables (Railway)
+
+Go to **your backend service → Variables** and add every row below.
+
+> These are the ONLY place the secrets live. Nothing is committed to the repo.
 
 | Variable | Value |
 | --- | --- |
 | `SPRING_PROFILES_ACTIVE` | `prod` |
-| `SERVER_PORT` | `${{PORT}}` (tells Spring to listen on the port Railway injects) |
-| `DATABASE_URL` | `jdbc:postgresql://<host>:5432/<db>` (from your PostgreSQL service → Variables/Connect tab) |
-| `DATABASE_USERNAME` | Postgres service username |
-| `DATABASE_PASSWORD` | Postgres service password |
+| `SERVER_PORT` | `${{PORT}}` (tells Spring to listen on Railway's injected port) |
+| `DATABASE_URL` | `jdbc:postgresql://<host>:5432/<db>` from your **PostgreSQL** service → **Variables / Connect** tab |
+| `DATABASE_USERNAME` | the Postgres service username |
+| `DATABASE_PASSWORD` | the Postgres service password |
 | `REDIS_HOST` | Redis service host |
 | `REDIS_PORT` | Redis service port |
-| `REDIS_PASSWORD` | Redis service password (leave empty if none) |
-| `JWT_SECRET` | generate one: `openssl rand -hex 32` |
-| `WEBHOOK_SECRET` | generate one: `openssl rand -hex 32` |
-| `ADMIN_BOOTSTRAP_CODE` | your secret admin signup code |
-| `FRONTEND_URL` | `https://<your-frontend>.vercel.app` (fill in after Step 11) |
-| `GOOGLE_ORG_CLIENT_ID` | see Step 10 (can be a dummy until then) |
-| `GOOGLE_ORG_CLIENT_SECRET` | see Step 10 (can be a dummy until then) |
-| `GOOGLE_ADMIN_CLIENT_ID` | same as org (or a separate admin client) |
+| `REDIS_PASSWORD` | Redis password (leave empty if the plugin sets none) |
+| `JWT_SECRET` | your generated hex string from Step 4 |
+| `WEBHOOK_SECRET` | your generated hex string from Step 4 |
+| `ADMIN_BOOTSTRAP_CODE` | your private admin signup code |
+| `FRONTEND_URL` | `https://<your-frontend>.vercel.app` — **fill in after Step 7** (no trailing slash) |
+| `GOOGLE_ORG_CLIENT_ID` | Google step (Step 9) — placeholder OK for now |
+| `GOOGLE_ORG_CLIENT_SECRET` | Google step — placeholder OK for now |
+| `GOOGLE_ADMIN_CLIENT_ID` | same as org (or a separate client) |
 | `GOOGLE_ADMIN_CLIENT_SECRET` | same as org (or separate) |
-| `RAZORPAY_KEY_ID` | Razorpay **test** key id |
+| `RAZORPAY_KEY_ID` | Razorpay **test** key id (Step 10) |
 | `RAZORPAY_KEY_SECRET` | Razorpay **test** key secret |
-| `RAZORPAY_WEBHOOK_SECRET` | keep the value `not-set-up-yet` (or set a real one) |
+| `RAZORPAY_WEBHOOK_SECRET` | keep `not-set-up-yet` (or set a real one) |
 
-> All of these must resolve or Spring will fail to start (the prod profile uses
-> `${...}` placeholders). For a first boot you may give Google and Razorpay env vars
-> placeholder values **only if** you also remove the unused buttons later — better: set real
-> test values as in Steps 6 and 10, they cost nothing.
+> All of these must resolve or Spring fails to start with
+> `Could not resolve placeholder ...`. Google/Razorpay can be dummy non-empty values for the
+> first boot; fill real ones in later.
 
-6. Deploy again. Watch **Deploy Logs**. Success looks like:
+---
+
+## Step 6 — Verify the backend booted
+
+1. **Deploy** again. Watch **Deploy Logs**. Success looks like:
    ```
    Started SubTrackApplication in X.XXX seconds
    ```
-   plus a line showing migrations applied (Flyway ran `V1`…`V9` automatically).
-7. Smoke-test the API in a browser:
+   and a line showing Flyway applied migrations `V1 … V9` automatically.
+2. Smoke-test the API in a browser:
    ```
    https://subtrack-prod.up.railway.app/api/plans
    ```
    You should get JSON of the three plans.
+3. **Verify the database migration** (Railway → your **PostgreSQL** service → **Data**):
+   you should see tables like `organizations`, `subscriptions`, `invoices`,
+   `usage_counters`, and a `flyway_schema_history` table listing `V1 … V9`.
+   If the tables are there, the backend is healthy.
+
+> Backend is up against the Railway domain now, but CORS will reject browser calls until you
+> set the real `FRONTEND_URL` after Vercel exists.
 
 ---
 
-## 5. Verify the database migration
-
-Postgres was created empty, but it is not empty anymore after the backend booted:
-
-1. Railway → your **PostgreSQL** service → **Data** (or connect with any PG client).
-2. You should see tables such as `organizations`, `subscriptions`, `invoices`, `usage_counters`
-   and a Flyway `flyway_schema_history` table listing `V1 … V9`.
-
-If the tables are there, the backend is healthy.
-
----
-
-## 6. Razorpay test keys (payments)
-
-1. https://dashboard.razorpay.com → register (free).
-2. **Settings → API Keys** and switch the toggle to **Test Mode**.
-3. Copy **Key ID** and **Key Secret** into the backend env vars from Step 4.
-4. Test-card for later signoff: `4111 1111 1111 1111`, any future expiry, any CVV.
-
----
-
-## 7. Google OAuth (optional but recommended — the "Continue with Google" buttons)
-
-The registration/login pages offer Google login, so giving it real values is worth it.
-
-1. https://console.cloud.google.com → **Create Project** (e.g., "subtrack").
-2. **APIs & Services → OAuth consent screen** → External → fill app name/email → Publish.
-3. **Credentials → Create Credentials → OAuth client ID → Web application**.
-4. Authorized redirect URIs (exact strings, both required):
-   - `https://subtrack-prod.up.railway.app/login/oauth2/code/google-org`
-   - `https://subtrack-prod.up.railway.app/login/oauth2/code/google-admin`
-5. Copy the client ID/secret into the matching backend env vars (Step 4). You may reuse the
-   same client for `google-org` and `google-admin`.
-
-> If you skip this, set `GOOGLE_ORG_CLIENT_ID` / `GOOGLE_ORG_CLIENT_SECRET` to any non-empty
-> dummy strings so the app boots — and tell reviewers the Google button is disabled in the demo.
-> Turning the button off is a code change, so weigh it against just doing Step 7.
-
----
-
-## 8. Deploy the frontend to Vercel
+## Step 7 — Deploy the frontend to Vercel
 
 1. https://vercel.com → **Add New → Project** → Import your `subtrack` GitHub repo.
 2. **Root Directory** → `frontend`.
-3. **Framework Preset**: Vite → Build Command: `pnpm build` → Output Directory: `dist`.
+3. **Framework Preset**: Vite. Build Command `pnpm build`. Output Directory `dist`.
+   (The repo already contains `frontend/vercel.json` for deep-link rewrites — you don't need to
+   create it.)
 4. **Environment Variables**:
    - `VITE_API_URL` = `https://subtrack-prod.up.railway.app`
-5. Deploy. When it finishes you get `https://subtrack-ui.vercel.app` (custom domain any time).
+5. **Deploy**. When it finishes you get e.g. `https://subtrack-ui.vercel.app` (custom domain later).
+
+> `VITE_API_URL` is baked into the JS at build time. If you change the backend URL, change this
+> variable and redeploy the frontend.
 
 ---
 
-## 9. Serve the build
+## Step 8 — Wire the two together (CORS + OAuth origin)
 
-The output of `pnpm build` is static files in `dist/`. Vercel serves them automatically.
-Two finishing touches:
+The backend only allows requests from its `FRONTEND_URL` (see `SecurityConfig`).
 
-1. Go to **Project → Settings → General → Build & Development Settings** and confirm root is
-   `frontend` and output is `dist`.
-2. Make deep links work (React Router paths like `/dashboard`, `/admin/tenants/...`). Create a
-   new file `frontend/vercel.json`:
-   ```json
-   {
-     "rewrites": [{ "source": "/((?!assets/).*)", "destination": "/index.html" }]
-   }
-   ```
-   Commit and push:
-   ```powershell
-   git add frontend/vercel.json
-   git commit -m "Vercel SPA rewrites"
-   git push
-   ```
-   Vercel re-deploys automatically on push.
-
----
-
-## 10. Talking to each other (CORS + OAuth origin)
-
-Spring only allows requests from `FRONTEND_URL` (configured in `SecurityConfig`):
-
-1. Now that Vercel gave you a URL, set the backend variable:
+1. On Railway, set the backend variable:
    ```
    FRONTEND_URL=https://subtrack-ui.vercel.app
    ```
-   (No trailing slash.)
-2. Redeploy the backend (Railway auto-redeploys on variable change).
-3. Fallback test: open `https://subtrack-ui.vercel.app` and check the browser **Network** tab —
-   any API call must return HTTP 200, not a CORS error. If you ever see
-   `Access-Control-Allow-Origin` errors, `FRONTEND_URL` does not match the Vercel URL exactly.
+   (Exact match — scheme + no trailing slash).
+2. Railway auto-redeploys on variable change.
+3. Open `https://subtrack-ui.vercel.app` → browser **Network** tab → any API call must return
+   **HTTP 200**, not a CORS error. If you see `Access-Control-Allow-Origin` errors, the two URLs
+   don't match exactly.
 
 ---
 
-## 11. Global smoke test — the full user journey
+## Step 9 — Google OAuth (optional but recommended)
+
+The signup/login pages have "Continue with Google", so real values are worth it.
+
+1. https://console.cloud.google.com → **Create Project** (e.g. `subtrack`).
+2. **APIs & Services → OAuth consent screen → External** → fill app name/email → **Publish**.
+3. **Credentials → Create Credentials → OAuth client ID → Web application**.
+4. Add both Authorized redirect URIs (exact strings):
+   - `https://subtrack-prod.up.railway.app/login/oauth2/code/google-org`
+   - `https://subtrack-prod.up.railway.app/login/oauth2/code/google-admin`
+5. Copy the client ID / secret into the backend env vars from Step 5 (you may reuse one client
+   for both `google-org` and `google-admin`).
+
+> If you skip this, keep dummy non-empty Google env vars so the app boots; tell reviewers the
+> Google button is disabled in the demo.
+
+---
+
+## Step 10 — Razorpay test keys (payments)
+
+1. https://dashboard.razorpay.com → register (free).
+2. **Settings → API Keys** → switch to **Test Mode**.
+3. Copy **Key ID** and **Key Secret** into the backend env vars from Step 5.
+4. Test card for later signoff: `4111 1111 1111 1111`, any future expiry, any CVV.
+
+---
+
+## Step 11 — Notes on production-only endpoints
+
+The repo contains a dev mock endpoint `/api/payments/pay/{invoiceId}` and a manual billing
+trigger `/api/invoices/run-cycle`. The production checkout uses only
+`/api/payments/razorpay/*`. The `run-cycle` trigger is for demo/admin use; if you want it
+hardened, keep it off the public internet or remove it from the prod profile. The frontend
+doesn't call either in production, so this is fine as-is for a resume demo.
+
+---
+
+## Step 12 — Global smoke test (full user journey)
 
 1. Open `https://subtrack-ui.vercel.app`.
 2. **Create an organization** (email/password works without Google).
-3. You log into the dashboard. Change the plan at `/pricing`:
-   - Pay with test card `4111 1111 1111 1111`.
+3. Log into the dashboard → change plan at `/pricing` → pay with test card `4111 1111 1111 1111`.
 4. `/usage` — the chart should animate with an indigo line.
 5. `/billing` — an invoice exists for your paid subscription; pay/cancel behaves.
 6. Sign out, sign back in.
@@ -229,10 +227,10 @@ If anything 500s, jump to Step 14.
 
 ---
 
-## 12. Admin console sign-off
+## Step 13 — Admin console sign-off
 
 1. Visit `https://subtrack-ui.vercel.app/admin/login`.
-2. Enter `ADMIN_BOOTSTRAP_CODE` from Step 4 (render only to you).
+2. Enter `ADMIN_BOOTSTRAP_CODE` from Step 4 (first time creates the admin).
 3. You land in the Admin console:
    - Dashboard shows MRR / orgs / subscriptions / churn.
    - "Recently added organizations" lists everything.
@@ -241,7 +239,25 @@ If anything 500s, jump to Step 14.
 
 ---
 
-## 13. What to put on your resume
+## Step 14 — Troubleshooting
+
+| Symptom | Cause → Fix |
+| --- | --- |
+| Backend won't start: `Could not resolve placeholder` | A required env var is missing → re-check Step 5 list |
+| Backend won't start: log mentions `PORT` | Set `SERVER_PORT` = `${{PORT}}` |
+| Java build fails: `invalid source release 25` | Build image doesn't support Java 25 → pick a `temurin-25`/Java 25 Maven image (Step 3, note) |
+| Migrations never ran / empty tables | Flyway runs only at first boot → recreate the Postgres service to re-run cleanly |
+| Frontend blank / white screen | `VITE_API_URL` not set at build time → set it and redeploy |
+| CORS error on every API call | `FRONTEND_URL` on Railway doesn't match the Vercel URL exactly (scheme + no slash) |
+| Deep link returns 404 | `frontend/vercel.json` rewrites missing → it's already committed (Step 7) |
+| Google button errors | Redirect URIs not exactly the two from Step 9, or consent screen not published |
+| Checkout fails | Razorpay keys are in **Test Mode** and card is test `4111 1111 1111 1111` |
+| Service sleeps on first load | Free/trial tiers sleep after inactivity — normal; click again |
+| Trial credit ran out | Cheapest demo: one paid Railway Postgres + backend, Redis on Upstash, or one VPS |
+
+---
+
+## Step 15 — What to put on your resume
 
 - Screenshots: dashboard, pricing/checkout with Razorpay badge, usage chart, admin console.
 - A 2–3 minute Loom walking through the owner flow then the admin flow.
@@ -254,29 +270,10 @@ If anything 500s, jump to Step 14.
 
 ---
 
-## 14. Troubleshooting
-
-| Symptom | Cause → Fix |
-| --- | --- |
-| Backend won't start, log says `Could not resolve placeholder` | A required env var is missing → compare list in Step 4 |
-| Backend won't start, log mentions `PORT` | Set `SERVER_PORT` = `${{PORT}}` |
-| Migrations never ran / empty tables | Flyway ran only at first boot; recreate the Postgres service to re-run cleanly |
-| Frontend shows blank page / white screen | `VITE_API_URL` not set (it was baked at build time) → set it and redeploy |
-| Browser console: CORS error on every API call | `FRONTEND_URL` on Railway doesn't match your Vercel URL exactly (scheme + no slash) |
-| Deep link returns 404 | `frontend/vercel.json` rewrites missing (Step 9) |
-| Google button errors | Redirect URIs not exactly the two from Step 7, or consent screen not published |
-| Checkout fails | Razorpay keys are in **Test Mode** and the card is test `4111 1111 1111 1111` |
-| Service sleeps (slow first load) | Free/trial tiers sleep after inactivity — normal; click again |
-| Trial credit ran out | Cheapest demo: one paid Railway Postgres + backend, Redis on Upstash, or a single VPS |
-
----
-
-## 15. Redo / teardown
-
-To start clean later:
+## Step 16 — Redo / teardown
 
 - **Railway**: delete the project (kills Postgres + Redis + backend).
 - **Vercel**: Remove Project.
-- **Google/Razorpay**: revoke OAuth client / test keys when you stop.
+- **Google / Razorpay**: revoke OAuth client / test keys when you stop.
 
 Redeploying later is just `git push` (Vercel) and redeploy (Railway) — no setup again.
